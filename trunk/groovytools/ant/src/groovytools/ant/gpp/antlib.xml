@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<antlib>
+  <taskdef name="copy" classname="groovytools.ant.gpp.GppCopy"/>
+  <taskdef name="javac" classname="groovytools.ant.gpp.GppJavac"/>
+  <typedef name="filter" classname="groovytools.ant.gpp.GppFilter"/>
+  <typedef name="config" classname="groovytools.ant.gpp.GppConfig"/>
+</antlib>
