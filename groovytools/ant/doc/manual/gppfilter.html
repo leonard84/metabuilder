@@ -1,0 +1,124 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>Gpp User Manual - GppFilter</title>
+</head>
+
+<body>
+
+<h1>GppFilter</h1>
+
+<h2>Description</h2>
+
+<p>Groovy Template-enabled filter for preprocessing.</p>
+
+<p><b>GppFilter</b> is an Ant filter that processes its input using the
+Groovy Template Engine.  It can be used with any filter chain-capable
+tasks such as <b>Copy</b>, <b>LoadFile</b>, <b>LoadProperties</b>, and
+<b>Move</b>.</p>
+
+<p>Note that for most preprocessing uses with <b>Copy</b>, <a href="gppcopy.html">GppCopy</a> provides a handy shortcut.
+
+<h2>Parameters</h2>
+
+<p><b>GppFilter</b> does not currently have any parameters at this time.</p>
+
+<h2>Parameters Specified as Nested Elements</h2>
+
+<h3><code>config</code></h3>
+
+<p>By specifying this nested element, you can configure the Groovy Template
+Engine and Context used when preprocessing.  See <a href="gppconfig.html">GppConfig</a> for a detailed description.</p>
+
+<h2>Examples</h2>
+
+<p>Note that there was a big change (for the better, IMHO) in Ant 1.6.x with
+respect to the treatment of non-builtin filters that allows them to be
+treated on par with builtin filters.  As a result, configuration between
+1.5.x and 1.6.x is different.</p>
+
+<pre>
+    <b>&lt;!-- Ant 1.6.x and later --&gt;</b>
+    &lt;copy todir="output" overwrite="true" &gt;
+      &lt;fileset dir="${src}" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      &lt;filterchain&gt;
+        &lt;gpp:filter/&gt;
+      &lt;/filterchain&gt;
+    &lt;/copy&gt;
+</pre>
+
+<pre>
+	
+    <b>&lt;!-- Ant 1.5.x and previous --&gt;</b>
+    &lt;copy todir="output" overwrite="true" &gt;
+      &lt;fileset dir="${src}" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      &lt;filterchain&gt;
+        &lt;filterreader classname="groovytools.ant.gpp.GppFilter"/&gt;
+      &lt;/filterchain&gt;
+    &lt;/copy&gt;
+</pre>
+
+<p>preprocess all files with a .html.gpp extension in the <b><code>${src}</code></b> directory to the output directory with a .html extension.
+
+<pre>
+    <b>&lt;!-- Ant 1.6.x and later (nested config) --&gt;</b>
+    &lt;copy todir="output" overwrite="true" &gt;
+      &lt;fileset dir="${src}" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      &lt;filterchain&gt;
+        &lt;gpp:filter xmlns:gpp="antlib:groovytools.ant.gpp" &gt;
+          &lt;config&gt;
+            &lt;context&gt;
+              &lt;property key="foo" value="bar"/&gt;
+            &lt;/context&gt;
+          &lt;/config&gt;
+        &lt;/gpp:filter&gt;
+      &lt;/filterchain&gt;
+    &lt;/copy&gt;
+</pre>
+
+<pre>
+    <b>&lt;!-- Ant 1.6.x and later (standalone config) --&gt;</b>
+    &lt;gpp:config id="gppconfig0"&gt;
+      &lt;context&gt;
+        &lt;property key="foo" value="bar"/&gt;
+      &lt;/context&gt;
+    &lt;/gpp:config&gt;
+
+    &lt;copy todir="output" overwrite="true" &gt;
+      &lt;fileset dir="${src}" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      &lt;filterchain&gt;
+        &lt;gpp:filter xmlns:gpp="antlib:groovytools.ant.gpp" &gt;
+          &lt;config refid="gppconfig0"/&gt;
+        &lt;/gpp:filter&gt;
+      &lt;/filterchain&gt;
+    &lt;/copy&gt;
+</pre>
+
+<pre>
+    <b>&lt;!-- Ant 1.5.x and previous --&gt;</b>
+    &lt;gpp:config id="gppconfig0"&gt;
+      &lt;context&gt;
+        &lt;property key="foo" value="bar"/&gt;
+      &lt;/context&gt;
+    &lt;/gpp:config&gt;
+
+    &lt;copy todir="output" overwrite="true" &gt;
+      &lt;fileset dir="${src}" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      &lt;filterchain&gt;
+        &lt;filterreader classname="groovytools.ant.gpp.GppFilter"&gt;
+          &lt;param type="config" value="gppconfig0" /&gt;
+        &lt;/filterreader&gt;
+      &lt;/filterchain&gt;
+    &lt;/copy&gt;
+</pre>
+
+<p>preprocess all files with a .html.gpp extension in the <b><code>${src}</code></b> directory to the output directory with a .html extension.
+
+</body>
+</html>

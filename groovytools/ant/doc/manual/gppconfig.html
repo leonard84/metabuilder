@@ -1,0 +1,444 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>Gpp User Manual - GppConfig</title>
+</head>
+
+<body>
+
+<h1>GppConfig</h1>
+
+<h2>Description</h2>
+
+<p>Data type used to configure the Groovy Template Engine and/or Context used when preprocessing.</p>
+
+<h2>Parameters</h2>
+
+<table border="1" cellpadding="2" cellspacing="0">
+	<thead>
+		<tr>
+			<th >
+				Name
+			</th>
+			<th >
+				Description
+			</th>
+			<th >
+				Required
+			</th>
+			<th >
+				Legal Values<br>
+				(<code>[]</code> indicates the default, if applicable)
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<b><code>usetempfile</code></b>
+			</td>
+			<td>
+				<p>If yes, then preprocessed output will be
+				written to a temporary file before
+				passing on to the next filter in the
+				chain, else preprocessed output will be
+				buffered in memory.</p>
+
+				<p>This parameter is especially important when processing extremely large files.</p>
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				<b>Yes, [No]</b>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>keep</code></b>
+			</td>
+			<td>
+				<p>If yes and if
+				<b><code>usetempfile</code></b> is yes,
+				then the temporary file will be kept
+				after preprocessing.  This is generally
+				useful only for debugging problems in a
+				filter chain in lieu of a 'tee' filter.</p>
+
+				<p>This parameter has no effect if <b><code>usetempfile</code></b> is no.</p>
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				<b>Yes, [No]</b>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>tempdir</code></b>
+			</td>
+			<td>
+				Sets the directory used for preprocessor
+				output if
+				<b><code>usetempfile</code></b> is true.
+				This directory will be created if it
+				does not exist.
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				A directory path. [<b><code>gpp.out</code>]</b>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>id</code></b>
+			</td>
+			<td>
+				<p>Sets the id of this configuration so that it can be referenced.</p>
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				A legal Ant reference id.
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Parameters Specified as Nested Elements</h2>
+
+<h3><code><a href="#gppcontext">context</a></code></h3>
+
+<p>This nested element defines a <b>GppContext</b> which allows you to
+configure the property binding used when preprocessing.</p>
+
+<h3><code><a href="#gppengine">engine</a></code></h3>
+
+<p>This nested element defines a <b>GppEngine</b> which allows you to
+configure the Groovy Template Engine used when preprocessing.  This element is
+intended for future use when and if there are user configurable properties of 
+the Groovy Template Engine.</p>
+
+<h2>Examples</h2>
+
+<p>Note: the following examples assume that <b>GppConfig</b> is being used
+as an antlib, hence the tasks use the <b><code>gpp</code></b> namespace.
+If not using as an antlib, then simply omit the ':' character and the xmlns
+attribute.</p>
+
+<pre>
+    &lt;gpp:config id="gppconfig0" xmlns:gpp="antlib:foundrylogic.gpp" &gt;
+      &lt;context&gt;
+        &lt;property key="foo" value="bar" /&gt;
+        &lt;property file="context.properties" /&gt;
+        &lt;tool key="myTool" classname="xyz.MyTool" /&gt;
+      &lt;/context&gt;
+    &lt;/gpp:config&gt;
+</pre>
+
+<hr/>
+
+<a name="gppcontext"/>
+<h1>GppContext</h1>
+
+<h2>Description</h2>
+
+<p>Data type used to configure the Groovy Template Context used when 
+preprocessing.</p>
+
+<h2>Parameters</h2>
+<p>No parameters are currently supported.</p>
+
+<h2>Parameters Specified as Nested Elements</h2>
+
+<h3><code>property</code></h3>
+
+<p>Use this nested element of <b>GppContext</b> to define properties
+in the Groovy Template Context.  0 or more of these elements may be declared as
+nested elements of a single <b>GppContext</b>.</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+	<thead>
+		<tr>
+			<th >
+				Name
+			</th>
+			<th >
+				Description
+			</th>
+			<th >
+				Required
+			</th>
+			<th >
+				Legal Values<br>
+				(<code>[]</code> indicates the default, if applicable)
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<b><code>key</code></b>
+			</td>
+			<td>
+				<p>The key used to store the value of this property</p>
+			</td>
+			<td rowspan="2">
+				<b>One of these must be set</b>
+			</td>
+			<td>
+				Any string.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>file</code></b>
+			</td>
+			<td>
+				<p>The path to a file that contains properties</p>
+			</td>
+			<td>
+				Any legal path
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>value</code></b>
+			</td>
+			<td>
+				<p>The value to be stored for this property</p>
+			</td>
+			<td>
+				<b>Yes</b>
+			</td>
+			<td>
+				Any string
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>encoding</code></b>
+			</td>
+			<td>
+				<p>The encoding of a property file</p>
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				A legal encoding identifier
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<h3><code>tool</code></h3>
+
+<p>Use this nested element of <b>GppContext</b> to define an instance of a
+user defined class to be placed into the context.  0 or more of these
+elements may be declared as nested elements of a single
+<b>GppContext</b>.</p>
+
+<p>Tool class restrictions:</p>
+<ul>
+<li><p>The tool's class must implement a public no-arg constructor.</p>
+</ul>
+
+<table border="1" cellpadding="2" cellspacing="0">
+	<thead>
+		<tr>
+			<th >
+				Name
+			</th>
+			<th >
+				Description
+			</th>
+			<th >
+				Required
+			</th>
+			<th >
+				Legal Values<br>
+				(<code>[]</code> indicates the default, if applicable)
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<b><code>key</code></b>
+			</td>
+			<td>
+				<p>The key used to store the value of this property</p>
+			</td>
+			<td>
+				<b>Yes</b>
+			</td>
+			<td>
+				Any string.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>className</code></b>
+			</td>
+			<td>
+				<p>The name of a class</p>
+			</td>
+			<td rowspan="2">
+				<b>One of these must be specified</b>
+			</td>
+			<td>
+				Fully qualified class name
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>refid</code></b>
+			</td>
+			<td>
+				Reference id of a configured data type</p>
+			</td>
+			<td>
+			    A valid reference	
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<hr/>
+
+<a name="gppengine"/>
+<h1>GppEngine</h1>
+
+<h2>Description</h2>
+
+<p>Data type used to configure the Groovy Template Engine used when 
+preprocessing.  Note that this intended for future when user configurable
+properties of the Groovy Template Engine exist.</p>
+
+<h2>Parameters</h2>
+
+<table border="1" cellpadding="2" cellspacing="0">
+	<thead>
+		<tr>
+			<th >
+				Name
+			</th>
+			<th >
+				Description
+			</th>
+			<th >
+				Required
+			</th>
+			<th >
+				Legal Values<br>
+				(<code>[]</code> indicates the default, if applicable)
+			</th>
+		</tr>
+	</thead>
+</table>
+
+<h2>Parameters Specified as Nested Elements</h2>
+
+<h3><code>property</code></h3>
+
+<p>Use this nested element of <b>GppEngine</b> to configure the Groovy Template
+Engine properties.  0 or more of these elements may be declared as nested
+elements of a single <b>GppEngine</b>.</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+	<thead>
+		<tr>
+			<th >
+				Name
+			</th>
+			<th >
+				Description
+			</th>
+			<th >
+				Required
+			</th>
+			<th >
+				Legal Values<br>
+				(<code>[]</code> indicates the default, if applicable)
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<b><code>key</code></b>
+			</td>
+			<td>
+				<p>The key used to store the value of this property</p>
+			</td>
+			<td rowspan="2">
+				<b>One of these must be set</b>
+			</td>
+			<td>
+				Any string.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>file</code></b>
+			</td>
+			<td>
+				<p>The path to a file that contains properties</p>
+			</td>
+			<td>
+				Any legal path
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>value</code></b>
+			</td>
+			<td>
+				<p>The value to be stored for this property</p>
+			</td>
+			<td>
+				<b>Yes</b>
+			</td>
+			<td>
+				Any string
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>encoding</code></b>
+			</td>
+			<td>
+				<p>The encoding of a property file</p>
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				A legal encoding identifier
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>add</code></b>
+			</td>
+			<td>
+				<p>If yes, then the property will be added, not set.  This supports the setting of multi-value properties.</p>
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				<b>Yes, [No]</b>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+</body>
+</html>

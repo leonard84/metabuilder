@@ -1,0 +1,131 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>Gpp User Manual - Installing</title>
+</head>
+
+<body>
+<h1>Installing Gpp</h1>
+<h2><a name="getting">Getting Gpp</a></h2>
+<p>
+The Gpp source is available from the SourceForge project web site as both 
+a .zip or as a .tar.gz.  Get the latest release from 
+<a target="_top" href="http://sourceforge.net/project/showfiles.php?group_id=208227">here</a>.</p>
+<p>
+See the section <a href="#buildinggpp">Building Gpp</a> on how to
+build Gpp from the source code.</p>
+
+<hr>
+<h2><a name="sysrequirements">System Requirements</a></h2>
+Gpp should run virtually anywhere that Ant runs, including 
+including Linux, Cygwin, commercial flavors of Unix such as Solaris, AIX, 
+HP-UX, Windows 9x and NT, Novell Netware 6 and MacOS X.
+<p>
+To build and use Gpp, you must have an Ant 1.6.x release
+installed and <code>ANT_HOME</code> defined.  The necessary Groovy libraries 
+are included with Gpp.</p>
+<p>
+Finally, to execute Gpp, you will also need a JDK installed on 
+your system, version 1.6 or later. 
+</p>
+
+<hr>
+<h2><a name="installing">Installing Gpp</a></h2>
+<p>Before Ant 1.6, extensions were installed by copying .jars into
+<code>$ANT_HOME/lib</code>.  Since 1.6, there is a new way to extend Ant
+using the <b>Antlib</b> convention.  Gpp may either be installed as an
+extension or as an Antlib.</p>
+
+<p><em>Note: How you will use Gpp in your projects depends on whether
+you install Gpp as an extension or as an Antlib.</em></p>
+
+<h3>Install Gpp as an Extension (the 'Old Way')</h3>
+This method is supported by both Ant 1.5 and 1.6 releases, so is currently
+the safest to use.</p>
+<ol>
+<li>Install Ant and define <code>ANT_HOME</code>, if you haven't already</li>
+<li>Download and uncompress the Gpp release on your local system.</li>
+<li>Change directory to your Gpp installation directory and execute
+<pre>
+	<b>ant deploy</b>
+</pre>
+<li>You are now ready to use Gpp in your build files as an extension, so
+see the section on Using Gpp to see what to do next.
+</ol>
+
+<h3>Install Gpp as an Antlib (the 'New Way')</h3>
+This method is only supported by 1.6 releases.
+<ol>
+<li>Install Ant and define <code>ANT_HOME</code>, if you haven't already.</li>
+<li>Download and uncompress the Gpp release on your local system.</li>
+<li>Add <code><b>$GPP_HOME/groovytools-ant-x.0.0.jar</b></code> to
+your <code><b>CLASSPATH</b></code>.
+<li>You are now ready to use Gpp in your build files as an Antlib, so go to
+the section on Using Gpp to see what to do next.
+</ol>
+
+<h3>What Gets Installed</h3>
+<p>The Gpp distribution consists of the following directory layout:
+<pre>
+   $Gpp_HOME          // installation directory
+   |
+   +--- doc           // contains documentation
+   |    |
+   |    +--- api      // contains Gpp Javadoc API
+   |    |
+   |    +--- howto    // contains various Gpp howto guides
+   |    |
+   |    +--- manual   // contains this manual
+   |
+   +--- example       // contains a simple project demonstrating Gpp
+   |
+   +--- lib           // contains Gpp and dependent jars
+   |
+   +--- src           // contains Gpp sources
+</pre>
+
+<hr>
+<h2><a name="buildinggpp">Building Gpp</a></h2>
+<p><em>Building Gpp from source requires Ant 1.6 or later and JDK 1.6 or later.
+</em></p>
+
+<p>To build, simply:</p>
+<ol>
+<li>Change directory to your Gpp installation directory.</li>
+<li>Execute <code>ant build deploy</code>.</li>
+</ol>
+
+<hr>
+<h2><a name="librarydependencies">Library Dependencies</a></h2>
+<p>Gpp depends on the following libraries:</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+  <tr>
+    <td><b>Jar Name</b></td>
+    <td><b>Version</b></td>
+    <td><b>Available At</b></td>
+  </tr>
+  <tr>
+    <td>ant.jar</td>
+    <td>
+        <li>1.6.x (to build Gpp and run)</li>
+    </td>
+    <td>
+		<a target="_top" href="http://ant.apache.org">http://ant.apache.org</a>
+	</td>
+  </tr>
+  <tr>
+    <td>groovy-all-1.0.jar</td>
+    <td>1.0</td>
+    <td>
+		<a target="_top" href="http://groovy.codehaus.org/">http://groovy.codehaus.org</a>
+	</td>
+  </tr>
+</table>
+</p>
+<hr>
+<p align="center">Copyright &copy; 2007 FoundryLogic, LLC. All rights 
+Reserved.</p>
+</body>
+</html>

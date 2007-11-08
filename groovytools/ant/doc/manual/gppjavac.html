@@ -1,0 +1,162 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>Gpp User Manual - GppJavac</title>
+</head>
+
+<body>
+
+<h1>GppJavac</h1>
+
+<h2>Description</h2>
+
+<p>Substitute for the <b>Javac</b> task with integrated preprocessing.</p>
+
+<p><b>GppJavac</b> simply inserts a preprocessing step just before
+compilation that, in effect, treats each source file as a Groovy Template.
+The preprocessed result is written to a temporary directory
+(the location of which you may specify) so as not to overwrite the
+original files.  </p>
+
+In addition, <b>GppJavac</b> also inserts an instance of <b><a
+href="gpptool.html">GppTool</a></b> into the Groovy Template Context that
+allows you to access information about the source and destination files
+and encodings used for each file copied.  It can be accessed through the
+key, <b><code>gpp</code></b>.
+
+<p><b>GppJavac</b> may be freely substituted wherever you used
+<b>javac</b>, but be aware that $ characters must be escaped (use
+the \ character) or Groovy may try to expand them them.</p>
+
+<h2>Parameters</h2>
+
+<p><b>GppJavac</b> supports all of <b>Javac</b>'s parameters in addition
+to the following:</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+	<thead>
+		<tr>
+			<th >
+				Name
+			</th>
+			<th >
+				Description
+			</th>
+			<th >
+				Required
+			</th>
+			<th >
+				Legal Values<br>
+				(<code>[]</code> indicates the default, if applicable)
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<b><code>preprocess</code></b>
+			</td>
+			<td>
+				Turns preprocessing on or off.
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				<b>[Yes], No</b>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>prepdir</code></b>
+			</td>
+			<td>
+				Sets the directory used for preprocessor
+				output.  This directory will be created
+				if it does not exist.
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				A directory path. [<b><code>gppjavac.out</code>]</b>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>keep</code></b>
+			</td>
+			<td>
+				If yes, then the <code>prepdir</code>
+				will be deleted upon completion, else
+				the directory will be deleted.
+			</td>
+			<td>
+				<b>No</b>
+			</td>
+			<td>
+				<b>Yes</b>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Parameters Specified as Nested Elements</h2>
+
+<p>In addition to all of <b>Javac</b>'s parameters, <b>GppJavac</b> also
+supports all of <b>Javac</b>'s parameters specified as nested elements,
+in addition to the following:</p>
+
+<h3><code>config</code></h3>
+
+<p>By specifying this nested element, you can configure the Groovy Template
+Engine and Context used when preprocessing.  See <a href="gppconfig.html">GppConfig</a> for a detailed description.</p>
+
+<h2>Examples</h2>
+Note: the following examples assume that <b>GppJavac</b> is being used as
+an antlib, hence the tasks use the <b><code>gpp</code></b> namespace.
+If not using as an antlib, then simply omit the ':' character and the xmlns
+attribute.
+
+<pre>
+  &lt;gpp:javac
+    srcdir="${src}"
+    destdir="build/classes"
+    classpath="xyz.jar"
+  /&gt;
+</pre>
+<p>first preprocesses then compiles all .java files under the <b><code>${src}</code></b> directory, and stores the .class files in the <b><code>${build}</code></b> directory. </p>
+
+<pre>
+  &lt;gpp:javac
+    srcdir="${src}"
+    destdir="build/classes"
+    classpath="xyz.jar"
+    keep="yes"
+    prepdir="/temp/gppjavac.out"
+    preprocess="yes"
+  /&gt;
+</pre>
+<p>preprocesses and compiles as above, but explicity sets the
+<b><code>keep</code></b>, <b><code>prepdir</code></b> and
+<b><code>preprocess</code></b> attributes.</p>
+
+<pre>
+  &lt;gpp:javac
+    srcdir="${src}"
+    destdir="build/classes"
+    classpath="xyz.jar"
+    xmlns:gpp="antlib:groovytools.ant.gpp"
+  &gt;
+    &lt;config&gt;
+      &lt;context&gt;
+        &lt;property name="foo" value="bar" /&gt;
+      &lt;/context&gt;
+    &lt;/config&gt;
+  &lt;/gpp:javac&gt;
+</pre>
+<p>preprocesses and compiles as in the first example, but adds a
+Groovy Template Context property called <b><code>foo</code></b>.</p>
+</body>
+</html>
