@@ -1,4 +1,4 @@
-<project name="groovytools-ant" default="build.deploy" basedir=".">
+<project name="groovytools-ant" default="buildDeploy" basedir=".">
 	<property environment="env"/>
 
 	<property name="name" value="groovytools-ant" />
@@ -94,4 +94,5 @@
 		</copy>
 	</target>
 
+	<target name="buildDeploy" depends="build, deploy"/>
 </project>
