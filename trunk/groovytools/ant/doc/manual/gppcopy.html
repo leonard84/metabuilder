@@ -1,0 +1,60 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>Gpp User Manual - GppCopy</title>
+</head>
+
+<body>
+
+<h1>GppCopy</h1>
+
+<h2>Description</h2>
+
+<p>Substitute for the <b>Copy</b> task with integrated preprocessing.</p>
+
+<p><b>GppCopy</b> is the simplest way to preprocess files.  Specified
+just like like the <b>Copy</b> task, <b>GppCopy</b> treats its source
+files as Groovy templates and writes the preprocessed output to the
+specified destination.  In essence, <b>GppCopy</b> is simply a short cut
+for a <b>Copy</b> task defined with a single <b>GppFilter</b>.</p>
+
+In addition, <b>GppCopy</b> also inserts an instance of <b><a
+href="gpptool.html">GppTool</a></b> into the Groovy Template Context that
+allows you to access information about the source and destination files
+and encodings used for each file copied.  It can be accessed through the
+key, <b><code>gpp</code></b>.
+
+<h2>Parameters</h2>
+
+<p><b>GppCopy</b> supports all of <b>Copy</b>'s parameters and does not add any additional parameters at this time.</p>
+
+<h2>Parameters Specified as Nested Elements</h2>
+
+<p>In addition to all of <b>Copy</b>'s parameters, <b>GppCopy</b> also
+supports all of <b>Copy</b>'s parameters specified as nested elements,
+ including additional filters which are processed subsequent to
+ preprocessing via <b>GppFilter</b>.  <b>GppCopy</b> additionally supports the following parameters specfied as nested elements:</p>
+
+<h3><code>config</code></h3>
+
+<p>By specifying this nested element, you can configure the Groovy Template
+Engine and Context used when preprocessing.  See <a href="gppconfig.html">GppConfig</a> for a detailed description.</p>
+
+<h2>Examples</h2>
+
+<p>Note: the following examples assume that <b>GppCopy</b> is being used as
+an antlib, hence the tasks use the <b><code>gpp</code></b> namespace.
+If not using as an antlib, then simply omit the ':' character and the 
+xmlns attribute.
+
+<pre>
+    &lt;gpp:copy todir="output" overwrite="true" xmlns:gpp="antlib:foundrylogic.gpp" &gt;
+      &lt;fileset dir="${src}" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+    &lt;/gpp:copy&gt;
+</pre>
+<p>preprocess all files with a .html.gpp extension in the <b><code>${src}</code></b> directory to the output directory with a .html extnension.
+
+</body>
+</html>

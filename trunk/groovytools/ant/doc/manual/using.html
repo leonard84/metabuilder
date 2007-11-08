@@ -1,0 +1,517 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>Gpp User Manual - Using</title>
+</head>
+
+<body>
+<a name="using"/>
+<h1>Using Gpp</h1>
+<em>Note: How you configure Gpp in your build scripts depends on whether
+you installed Gpp as an extension or as an Antlib.  The differences
+aren't great and are explained below where applicable.</em></p>
+
+<a name="basic"/>
+<h2>Basic Gpp</h2>
+<p>Gpp uses Ant to drive Groovy-style template preprocessing.  In order
+to use Gpp, you should have some familiarity with both Ant and Groovy Templates.
+Gpp supports all legal VTL and by default, includes the Ant project
+object in all contexts available to your templates.  This allows you
+to access any project properties defined in your build script.</p>
+
+<a name="accessing"/>
+<h3>Accessing Ant Properties within a Template</h3>
+The current Ant project properties are available to a template through
+the key <code><b>ant</b></code>.  For example, if the property
+<code><b>foo</b></code> were defined as <code><b>bar</b></code> within
+the Ant build file, then this template:</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1"><tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+public class HelloWorld {
+  public static void main(String[] args) {
+    System.out.println("<b>$ant.foo</b>");
+  }
+}
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<p>would become:</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1"><tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+public class HelloWorld {
+  public static void main(String[] args) {
+    System.out.println("<b>bar</b>");
+  }
+}
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<p>Any Ant project property can be accessed by the template, regardless how
+the project property was defined.  This means that you can use
+properties loaded from the environment, property files, or xml.</p>
+
+<a name="adding" />
+<h3>Adding Gpp To Your Project</h3>
+<h4>Gpp is an Extension</h4>
+<p>In order to use Gpp in your projects as an extension, you must
+include the following definitions:</p>
+
+<pre>
+    <b>&lt;typedef resource="groovytools.ant/gpp/typedef.properties" /&gt;
+    &lt;taskdef resource="groovytools.ant/gpp/taskdef.properties" /&gt;</b>
+</pre>
+
+<p>Defining a <code>gppInit</code> target like the one below is one way to do
+organize this and have these definitions executed using a dependency.</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1"><tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="gppInit"&gt;
+    &lt;typedef resource="groovytools.ant/gpp/typedef.properties" /&gt;
+    &lt;taskdef resource="groovytools.ant/gpp/taskdef.properties" /&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<h4>Gpp as an Antlib</h4>
+<p>In order to use Gpp in your projects as an Antlib, you must
+add the following line to your <code><b>&lt;project&gt;</b></code> tag:</p>
+<pre>
+	<b>xmlns:gpp="antlib:groovytools.ant.gpp"</b>
+</pre>
+
+<p>For example,</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1"><tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;project 
+	name="Groovy Tools - Ant: Groovy Pre-Processor Test" 
+	default="all" 
+	basedir="."
+	xmlns:gpp="antlib:groovytools.ant.gpp"
+  &lt;/project&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<p><em>Note that by using Gpp as an Antlib, you do not have to load any
+Gpp typedef or tasksdef resources explicity and so there is generally no need
+for an <code>gppInit</code>-like target as shown above.</em></p>
+
+<a name="simple" />
+<h3>Simple Preprocessing</h3>
+<p><code><b>&lt;gppcopy&gt;</b></code> is the easiest way to preprocess
+text files.  Use <code><b>&lt;gppcopy&gt;</b></code> (extension) or
+<code><b>&lt;gpp:copy&gt;</b></code> (Antlib)  just as you would
+<code><b>&lt;copy&gt;</b></code> to preprocess files in addition to
+copying them.  <code><b>&lt;gppcopy&gt;</b></code> supports all of
+<code><b>&lt;copy&gt;</b></code>'s parameters and nested parameters.</p>
+
+<p>Note that when using an Antlib, it is best to also specify the default namespace attribute of tasks and filters to avoid naming problems with nested elements.  The default namespace for <b>Gpp</b> tasks and filters is <b><code>xmlns="antlib:groovytools.ant.gpp"</code></b></p>
+
+<p>This example shows how one might use various Ant mechanisms to define
+project properties and select input sources using a
+<code>&lt;fileset&gt;</code> and <code>&lt;mapper&gt;</code>:</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">Gpp installed as an extension</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="preprocess" depends="gppInit"&gt;
+    &lt;property name="version" value="1.0.0" &gt;
+    &lt;property environment="env" &gt;
+    &lt;xmlproperty file="some.xml" &gt;
+    &lt;<b>gppcopy</b> todir="output" overwrite="true" &gt;
+      &lt;fileset dir="src" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+    &lt;/<b>gppcopy</b>&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">Gpp installed as an Antlib</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="preprocess"&gt;
+    &lt;property name="version" value="1.0.0" &gt;
+    &lt;property environment="env" &gt;
+    &lt;xmlproperty file="some.xml" &gt;
+    &lt;<b>gpp:copy</b> todir="output" overwrite="true" <b>xmlns="antlib:groovytools.ant.gpp"</b>&gt; 
+      &lt;fileset dir="src" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+    &lt;/<b>gpp:copy</b>&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<a name="javac" />
+<h3>Preprocessing Java Code</h3>
+<p><code><b>&lt;gppjavac&gt;</b></code> (extension) or
+<code><b>&lt;gpp:javac&gt;</b></code> (Antlib) integrates preprocessing
+with the java compiler to allow you to treat your Java sources as if they were
+Groovy Templates to support conditional compilation, macros, and
+whatever else your imagination can come up with.</p>
+
+<p><code><b>&lt;gppjavac&gt;</b></code> and
+<code><b>&lt;gpp:javac&gt;</b></code> accepts all of
+<code><b>&lt;javac&gt;</b></code>'s parameters and nested parameters, so
+you can simply replace any usage of <code><b>&lt;javac&gt;</b></code>
+with <code><b>&lt;gppjavac&gt;</b></code>.</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">Gpp installed as an extension</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="compile" depends="gppInit"&gt;
+    &lt;<b>gppjavac</b> srcdir="src" destdir="build/classes"&gt;
+      &lt;classpath refid="some.classpath" /&gt;
+    &lt;/<b>gppjavac</b>&gt;
+  &lt;/target&gt;</pre>
+</td></tr></table>
+</td></tr></table>
+
+</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">Gpp installed as an Antlib</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="compile"&gt;
+    &lt;<b>gpp:javac</b> srcdir="src" destdir="build/classes" <b>xmlns:gpp="antlib:groovytools.ant.gpp"</b> &gt;
+      &lt;classpath refid="some.classpath" /&gt;
+    &lt;/<b>gpp:javac</b>&gt;
+  &lt;/target&gt;</pre>
+</td></tr></table>
+</td></tr></table>
+
+<a name="chaining" />
+<h3>Preprocessing with Filter Chains</h3>
+<p>Use the <code><b>groovytools.ant.gpp.gppfilter</b></code> filter reader
+in your filter chains to enable Groovy processing in your streams.
+The following example is essentially identical to the Simple Processing
+example shown above, but does it using a filter chain instead.</p>
+
+<p>Note that pre-Ant 1.6, external filter readers were accessed via
+<code>filterreader</code> and as of Ant 1.6, external
+filter readers can now be used in the same way as built-ins.</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">Gpp installed as an extension</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="copychain" depends="gppInit"&gt;
+    &lt;copy todir="output" overwrite="true"&gt;
+      &lt;fileset dir="src"&gt;
+        &lt;include name="**/*.html.gpp" /&gt;
+      &lt;/fileset&gt;
+      &lt;filterchain&gt;
+        <b>&lt;filterreader classname="groovytools.ant.gpp.GppFilter" /&gt;</b>
+      &lt;/filterchain&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+    &lt;/copy&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">Gpp installed as an Antlib</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="copychain"&gt;
+    &lt;copy todir="output" overwrite="true"&gt;
+      &lt;fileset dir="src"&gt;
+        &lt;include name="**/*.html.gpp" /&gt;
+      &lt;/fileset&gt;
+      &lt;filterchain&gt;
+        &lt;<b>gpp:filter</b>/&gt;
+      &lt;/filterchain&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+    &lt;/copy&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<a name="advanced" />
+<h2>Advanced Gpp</h2>
+
+<a name="configuring" />
+<h3>Configuring Gpp</h3>
+<p>Gpp is configured by using adding a
+<code><b>&lt;config&gt;</b></code> nested parameter to any Gpp task or
+filter.  This nested parameter allows you to pass properties directly to
+the Groovy Template Context and/or Groovy Template Engine prior to use.  </p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom"><code><b>&lt;config&gt;</b></code>
+used as a nested parameter (extension)</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="preprocess" depends="gppInit"&gt;
+    &lt;gppcopy todir="output" overwrite="true" &gt;
+      &lt;fileset dir="src" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      &lt;<b>config</b>&gt;
+        ...
+      &lt;/<b>config</b>&gt;
+    &lt;/gppcopy&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom"><code><b>&lt;config&gt;</b></code>
+used as a nested parameter (Antlib)</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="preprocess" &gt;
+    &lt;gpp:copy todir="output" overwrite="true" xmlns:gpp="antlib:groovytools.ant.gpp" &gt;
+      &lt;fileset dir="src" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      &lt;<b>config</b>&gt;
+        ...
+      &lt;/<b>config</b>&gt;
+    &lt;/gpp:copy&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<p>You may also configure a Groovy Template Context and/or Groovy Template 
+Engine using a standalone <code><b>&lt;gppconfig&gt;</b></code> (extension) or
+<code><b>&lt;gpp:config&gt;</b></code> (Antlib) element, which can be
+reference by its <code>refid</code>.</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom"> <code><b>&lt;gppconfig&gt;</b></code> used
+standalone and referenced by its <code>refid</code>
+(extension)</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;target name="gppInit"&gt;
+    &lt;typedef resource="groovytools.ant/gpp/typedef.properties" /&gt;
+    &lt;taskdef resource="groovytools.ant/gpp/taskdef.properties" /&gt;
+
+    <b>&lt;gppconfig id="gppconfig0"&gt;
+      ...
+    &lt;/gppconfig&gt;</b>
+  &lt;/target&gt;
+
+  &lt;target name="preprocess" depends="gppInit"&gt;
+    &lt;gppcopy todir="output" overwrite="true" &gt;
+      &lt;fileset dir="src" includes="*.html.gpp" /&gt;
+      &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      <b>&lt;config refid="gppconfig0" /&gt;</b>
+    &lt;/gppcopy&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom"> <code><b>&lt;gpp:config&gt;</b></code> used
+standalone and referenced by its <code>refid</code>
+(Antlib)</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+
+  &lt;target name="gppInit"&gt;
+    <b>&lt;gpp:config id="gppconfig0"&gt;
+      ...
+    &lt;/gpp:config&gt;</b>
+  &lt;/target&gt;
+
+  &lt;target name="preprocess" depends="gppInit"&gt;
+    &lt;gpp:copy todir="output" overwrite="true" xmlns:gpp="antlib:groovytools.ant.gpp" &gt;
+      &lt;gpp:fileset dir="src" includes="*.html.gpp" /&gt;
+      &lt;gpp:mapper type="glob" from="*.html.gpp" to="*.html" /&gt;
+      <b>&lt;gpp:config refid="gppconfig0" /&gt;</b>
+    &lt;/gpp:copy&gt;
+  &lt;/target&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<a name="context" />
+<h4>Groovy Template Context Configuration</h4>
+<p>This table describes the Groovy Template Context properties set by default
+by Gpp in addition to any other properties defined by default by
+the Groovy Template itself.  You can of course override these settings and/or 
+any others in your build scripts:</p>
+
+<table bgcolor="white" border="1" cellpadding="1" cellspacing="0">
+<caption align="bottom">
+<code>Default Gpp Groovy Template Context properties
+</caption>
+	<tr>
+		<th>
+			Name
+		</th>
+		<th>
+			Description
+		</th>
+	</tr>
+	<tr>
+		<td>
+			<code><b>ant</b><code>
+		</td>
+		<td>
+			Reference to a hash of the current project properties.
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<code><b>project</b><code>
+		</td>
+		<td>
+			Reference to the current Ant project object.
+		</td>
+	</tr>
+</table>
+
+<p>The <code><b>&lt;context&gt;</b></code> nested parameter of
+<code><b>&lt;gppconfig&gt;</b></code> allows you to define <b>properties</b>
+and <b>tools</b> for use by your templates.  
+
+<ul>
+<li><p>The <code><b>&lt;property&gt;</b></code> nested parameter of
+<code><b>&lt;context&gt;</b></code> is similar to Ant's
+<code><b>&lt;property&gt;</b></code> in that it can be used to define a
+simple property or to read properties from a file using the extended
+property file syntax.  In addition properties defined in this way are
+not made Ant project properties and are available in your templates by
+their simple names, i.e.  they do not need to be preceded by
+<b><code>ant.</code></b> to be accessed in your templates.</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">
+<code>Example Groovy Template Context property definitions</code> 
+</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;gppconfig id="gppconfig0" &gt;
+    &lt;context&gt;
+      <b>&lt;property key="foo" value="bar" /&gt;
+      &lt;property file="some.properties" /&gt;</b>
+    &lt;/context&gt;
+  &lt;/gppconfig&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+</li>
+
+<li><p>The <code><b>&lt;tool&gt;</b></code> nested parameter of
+<code><b>&lt;context&gt;</b></code> is used to load utility objects
+into the context for use by templates. Your tool simply needs to have
+a public no-arg constructor so that it can be created dynamically by
+Gpp.</p>
+
+<p>There are two methods in which to configure tools:</p>
+<ol>
+<li><p>Specify the fully qualified class name of the tool using the
+<code><b>className</b></code> attribute:</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">
+<code>Example of Groovy Template Context tool configured using the 
+<b>className</b> attribute</code> 
+</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  &lt;gppconfig id="gppconfig0" &gt;
+    &lt;context&gt;
+      <b>&lt;tool key="mytool" className="foo.bar.MyTool" </b>/&gt;
+    &lt;/context&gt;
+  &lt;/gppconfig&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+</li>
+
+<p>While simpler than the next method, this method does not support 
+configuration of the tool.</p>
+
+<li><p>Specify the id of a configured data type using the <code><b>refid</b></code> attribute:</p>
+
+<table bgcolor="black" border="0" cellpadding="0" cellspacing="1">
+<caption align="bottom">
+<code>Example of a Groovy Template Context tool configured using the 
+<b>refid</b> attribute</code> 
+</caption>
+<tr><td>
+<table bgcolor="white" border="0" cellpadding="1" cellspacing="0"><tr><td>
+<pre>
+  <b>&lt;typedef name="mytool" className="foo.bar.MyTool" &gt;
+  &lt;mytool id="mytool0" someProp="someValue" &gt;</b>
+  
+  &lt;gppconfig id="gppconfig0" &gt;
+    &lt;context&gt;
+      <b>&lt;tool key="mytool" refid="mytool0" </b>/&gt;
+    &lt;/context&gt;
+  &lt;/gppconfig&gt;
+</pre>
+</td></tr></table>
+</td></tr></table>
+
+<p>The advantage of this method over the previous method is that you can
+configure your tool using Ant's configuration conventions. (Note:
+Ant dynamically supports any class following its configuration
+conventions, so it is not necessary for your tool to extend
+<code><b>org.apache.tools.ant.types.DataType</b></code> to make this
+work.)</p>
+</li>
+</ol>
+
+<p>Regardless of which method you use, if your tool supports the method</p>
+<pre>
+	<b>public void setTemplateContext(Map map)</b>
+</pre>
+<p>then that method will be invoked, passing your tool the
+Groovy Template Context instance prior to use.</p>
+</li>
+</ul>
+
+<hr>
+
+<p align="center">Copyright &copy;2007 FoundryLogic, LLC. All rights
+Reserved.</p>
+
+</body>
+</html>
+

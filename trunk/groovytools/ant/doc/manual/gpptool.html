@@ -1,0 +1,137 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>Gpp User Manaul - GppTool</title>
+</head>
+
+<body>
+
+<h1>GppTool</h1>
+
+<h2>Description</h2>
+
+<p>The <code>GppTool</code> provides access to the current source and
+destination file information and encodings.</p>
+
+<p>Note that <b>GppTool</b> is not available to files being processed via
+<b>GppFilter</b> because no information about the source or destination
+streams are available to filters.</p>
+
+<p><b>GppTool</b> is automatically inserted by <b>GppCopy</b> and
+<b>GppJavac</b> into the Groovy Template Context for each file processed.
+Using the key, <b>gpp</b>, you can access the following methods:</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+	<thead>
+		<tr>
+			<th >
+				Method
+			</th>
+			<th >
+				Description
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<b><code>getSourceName()</code></b>
+			</td>
+			<td>
+				Returns the full path name of the source file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getSourceBaseName()</code></b>
+			</td>
+			<td>
+				Returns the base name of the source file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getSourceDirName()</code></b>
+			</td>
+			<td>
+				Returns the directory path name of the source file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getSourceLength()</code></b>
+			</td>
+			<td>
+				Returns the length in bytes of the source file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getSourceLastModified()</code></b>
+			</td>
+			<td>
+				Returns the time the source file was last modified (as a Long).
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getSourceEncoding()</code></b>
+			</td>
+			<td>
+				Returns the encoding of the source file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getDestinationName()</code></b>
+			</td>
+			<td>
+				Returns the full path name of the destination file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getDestinationBaseName()</code></b>
+			</td>
+			<td>
+				Returns the base name of the destination file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getDestinationDirName()</code></b>
+			</td>
+			<td>
+				Returns the directory path name of the destination file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getDestinationLength()</code></b>
+			</td>
+			<td>
+				Returns the length in bytes of the destination file.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getDestinationLastModified()</code></b>
+			</td>
+			<td>
+				Returns the time the destination file was last modified (as a Long).
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<b><code>getDestinationEncoding()</code></b>
+			</td>
+			<td>
+				Returns the encoding of the destination file.
+			</td>
+		</tr>
+		<tr>
+</table>
+
+</body>
+</html>
