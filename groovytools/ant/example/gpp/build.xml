@@ -1,0 +1,57 @@
+<project name="FoundryLogic Gpp: Groovy Pre-Processor Test" default="all" basedir=".">
+	<property name="helloWorldMessage" value="Hello Gpp!"/>
+	<property name="goodbyeWorldMessage" value="Goodbye Gpp!"/>
+
+	<target name="gppDefs" unless="gppDefs.done">
+		<property name="gppDefs.done" value="true"/>
+		<typedef resource="groovytools/ant/gpp/typedef.properties" />
+		<taskdef resource="groovytools/ant/gpp/taskdef.properties" />
+
+		<gppconfig id="gpp0">
+			<context>
+				<tool key="calendar" classname="java.util.GregorianCalendar"/>
+				<property key="foo" value="bar"/>
+				<property file="example.properties"/>
+			</context>
+		</gppconfig>
+	</target>
+
+	<target name="all" depends="clean, gppcopy, gppjavac, gppfilter"/>
+
+	<target name="clean" >
+		<delete failonerror="false" file="*.log" />
+		<delete failonerror="false" includeEmptyDirs="true">
+			<fileset dir="output">
+				<include name="*/**" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="gppcopy" depends="gppDefs">
+		<gppcopy todir="output" overwrite="true">
+			<config refid="gpp0"/>
+			<fileset dir="src" includes="*.html.gpp"/>
+			<mapper type="glob" from="*.html.gpp" to="*.html"/>
+		</gppcopy>
+	</target>
+
+	<target name="gppjavac" depends="gppDefs">
+		<gppjavac preprocess="true" prepdir="gppjavac.out" destdir="output" includeAntRuntime="false" srcdir="src">
+			<config keep="false" useTempFile="true" tempDir="gppfilter.out"/>
+		</gppjavac>
+	</target>
+
+	<target name="gppfilter" depends="gppDefs">
+		<copy todir="output" overwrite="true">
+			<fileset dir="src">
+				<include name="**/*.html.gpp"/>
+			</fileset>
+			<filterchain>
+				<filterreader classname="groovytools.ant.gpp.GppFilter">
+					<param type="config" name="refid" value="gpp0"/>
+				</filterreader>
+			</filterchain>
+			<mapper type="glob" from="*.html.gpp" to="*.html"/>
+		</copy>
+	</target>
+</project>

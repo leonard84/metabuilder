@@ -1,0 +1,97 @@
+<project name="groovytools-ant" default="build.deploy" basedir=".">
+	<property environment="env"/>
+
+	<property name="name" value="groovytools-ant" />
+	<property name="version" value="1.0.0" />
+
+	<path id="classpath">
+		<pathelement path="src"/>
+		<pathelement path="build/classes"/>
+
+		<fileset dir="lib">
+			<include name="*.jar"/>
+			<exclude name="${name}*.jar" />
+		</fileset>
+
+		<fileset dir="${env.ANT_HOME}/lib">
+			<include name="*.jar"/>
+			<exclude name="${name}*.jar" />
+		</fileset>
+	</path>
+
+	<target name="properties" unless="properties.done" >
+		<property name="properties.done" value="true"/>
+
+		<tstamp/>
+		<property name="tstamp" value="${DSTAMP}-${TSTAMP}" />
+
+
+		<property name="lib.dir" value="lib" />
+		<property name="build.dir" value="build" />
+		<property name="ant.jar.name" value="${name}-${version}.jar" />
+		<property name="javac.src.dir" value="src" />
+		<property name="javac.dest.dir" value="build/classes" />
+
+	</target>
+
+	<target name="clean" depends="properties">
+		<delete failonerror="false" includeEmptyDirs="true">
+			<fileset dir="${javac.dest.dir}">
+				<include name="*/**" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="compile" depends="properties">
+		<mkdir dir="build/classes"/>
+		<javac destdir="${javac.dest.dir}" includeAntRuntime="false" debug="${javac.debug}" optimize="${javac.optimize}" srcDir="${javac.src.dir}">
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+
+	<target name="debug" depends="properties">
+			<property name="javac.debug" value="on" />
+
+			<antcall target="compile" />
+	</target>
+
+    <target name="copyResources" depends="properties">
+        <copy todir="${javac.dest.dir}">
+            <fileset dir="${javac.src.dir}" includes="**/*.properties" />
+        </copy>
+    </target>
+
+	<target name="buildJar" depends="properties,copyResources"
+            description="Builds a jar">
+		<mkdir dir="${lib.dir}"/>
+		<jar jarfile="${lib.dir}/${ant.jar.name}">
+			<fileset dir="${javac.dest.dir}"/>
+            <include name="groovytools/ant/**"/>
+		</jar>
+	</target>
+
+	<target name="build" depends="properties">
+		<antcall target="clean" />
+
+		<antcall target="compile" />
+
+		<antcall target="buildJar" />
+	</target>
+
+	<target name="build-g" depends="properties">
+		<property name="javac.type" value="-g" />
+
+		<antcall target="clean" />
+
+		<antcall target="debug" />
+
+		<antcall target="buildJar" />
+	</target>
+
+	<target name="deploy" depends="properties">
+		<copy todir="${env.ANT_HOME}/lib">
+			<fileset dir="${lib.dir}" includes="${ant.jar.name}"/>
+		</copy>
+	</target>
+
+</project>

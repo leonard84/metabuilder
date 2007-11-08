@@ -1,0 +1,75 @@
+<project 
+	name="FoundryLogic Gpp: Groovy Pre-Processor Test" 
+	default="all" 
+	basedir="."
+	xmlns:gpp="antlib:foundrylogic.gpp"
+>
+	<property name="helloWorldMessage" value="Hello Gpp!"/>
+	<property name="goodbyeWorldMessage" value="Goodbye Gpp!"/>
+
+	<path id="gppPath">
+		<fileset dir="../lib" includes="*.jar"/>
+	</path>
+
+	<gpp:config id="gpp0" xmlns="antlib:foundrylogic.gpp">
+		<context>
+			<tool key="calendar" classname="java.util.GregorianCalendar"/>
+			<property key="foo" value="bar"/>
+			<property file="example.properties"/>
+		</context>
+	</gpp:config>
+
+	<target name="all" depends="clean, gppcopy, gppjavac, gppfilter"/>
+
+	<target name="clean" >
+		<delete failonerror="false" file="*.log" />
+		<delete failonerror="false" includeEmptyDirs="true">
+			<fileset dir="output">
+				<include name="*/**" />
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="gppcopy" >
+		<gpp:copy todir="output" overwrite="true" xmlns="antlib:foundrylogic.gpp">
+			<config refid="gpp0"/>
+			<fileset dir="src" includes="*.html.gpp"/>
+			<mapper type="glob" from="*.html.gpp" to="*.html"/>
+		</gpp:copy>
+	</target>
+
+	<target name="gppjavac" >
+		<gpp:javac preprocess="true" prepdir="gppjavac.out" destdir="output" includeAntRuntime="false" srcdir="src" xmlns="antlib:foundrylogic.gpp">
+			<classpath refid="gppPath" />
+			<config keep="false" useTempFile="true" tempDir="gppfilter.out"/>
+		</gpp:javac>
+	</target>
+
+	<target name="gppfilter" >
+		<copy todir="output" overwrite="true">
+			<fileset dir="src">
+				<include name="**/*.html.gpp"/>
+			</fileset>
+			<filterchain>
+				<gpp:filter xmlns="antlib:foundrylogic.gpp">
+					<config refid="gpp0"/>
+				</gpp:filter>
+			</filterchain>
+			<mapper type="glob" from="*.html.gpp" to="*.html"/>
+		</copy>
+	</target>
+
+	<target name="gppfilter2" >
+		<copy todir="output" overwrite="true">
+			<fileset dir="src">
+				<include name="**/*.html.gpp"/>
+			</fileset>
+			<filterchain>
+				<gpp:filter xmlns="antlib:foundrylogic.gpp">
+					<!--config refid="gpp0"/-->
+				</gpp:filter>
+			</filterchain>
+			<mapper type="glob" from="*.html.gpp" to="*.html"/>
+		</copy>
+	</target>
+</project>

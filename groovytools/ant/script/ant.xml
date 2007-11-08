@@ -1,0 +1,172 @@
+<!--
+    This ant script is intended for library projects.  To use, include
+    the following snippet within the <project> element and set the
+    values appropriately:
+    
+        <property environment="env"/>
+        <property name="jar.name" value="..."
+        <property name="javadoc.fullname" value="..."
+        <import file="./ant.xml"/>
+-->
+
+<project name="lib-targets">
+
+    <path id="javac.extended.classpath" path=""/>
+    <path id="javac.sourcepath" path="${basedir}/src"/>
+    <path id="javac.presourcepath" path="${basedir}/src"/>
+
+    <target name="debug">
+        <property name="javac.debug" value="true"/>
+    </target>
+        
+    <target name="optimize">
+        <property name="javac.optimize" value="on"/>
+    </target>
+        
+    <target name="nowarn">
+        <property name="javac.nowarn" value="on"/>
+    </target>
+        
+    <target name="deprecation">
+        <property name="javac.deprecation" value="on"/>
+    </target>
+        
+
+    <target name="init" unless="init.done" >
+        <property name="init.done" value="true"/>
+
+        <!--
+             The following Ant property ensures that the user's classpath is
+             ignored.
+        -->
+        <property name="build.sysclasspath" value="ignore"/>
+
+        <condition property="javac.debug" value="off">
+            <not><isset property="javac.debug"/></not>
+        </condition>
+
+        <condition property="javac.optimize" value="off">
+            <not><isset property="javac.optimize"/></not>
+        </condition>
+
+        <condition property="javac.nowarn" value="off">
+            <not><isset property="javac.nowarn"/></not>
+        </condition>
+
+        <condition property="javac.deprecation" value="off">
+            <not><isset property="javac.deprecation"/></not>
+        </condition>
+
+        <condition property="javac.src.dir" value="${basedir}/src">
+            <not><isset property="javac.src.dir"/></not>
+        </condition>
+
+        <condition property="build.dir" value="${basedir}/build">
+            <not><isset property="build.dir"/></not>
+        </condition>
+
+        <condition property="javac.dest.dir" value="${build.dir}/classes">
+            <not><isset property="javac.dest.dir"/></not>
+        </condition>
+
+        <condition property="jar.dest.dir" value="${build.dir}/lib">
+            <not><isset property="jar.dest.dir"/></not>
+        </condition>
+
+        <condition property="javadoc.fullname" value="${ant.project.name}">
+            <not><isset property="javadoc.fullname"/></not>
+        </condition>
+
+        <condition property="javadoc.dest.dir" value="${basedir}/build/api">
+            <not><isset property="javadoc.dest.dir"/></not>
+        </condition>
+
+        <condition property="lib.dir" value="${basedir}/lib">
+            <not><isset property="lib.dir"/></not>
+        </condition>
+
+        <path id="javac.classpath">
+            <path refid="javac.extended.classpath"/>
+            <path refid="javac.sourcepath"/>
+            <pathelement path="${javac.dest.dir}"/>
+            <fileset dir="${lib.dir}" includes="*.jar,*.zip"/>
+<!--
+            why was this here?
+            <fileset dir="${env.ANT_HOME}/lib" includes="*.jar,*.zip"/>
+-->
+        </path>
+
+		  <mkdir dir="${javac.dest.dir}"/>
+		  <mkdir dir="${jar.dest.dir}"/>
+
+    </target>
+
+    <target name="compile" depends="init">
+        <javac
+            includeAntRuntime="false"
+            debug="${javac.debug}"
+            nowarn="${javac.nowarn}"
+            deprecation="${javac.deprecation}"
+            destdir="${javac.dest.dir}"
+            classpathref="javac.classpath"
+        >
+            <src refid="javac.sourcepath"/>
+        </javac>
+    </target>
+
+    <target name="javadoc" depends="init">
+        <mkdir dir="${javadoc.dest.dir}"/>
+
+        <javadoc
+            destdir="${javadoc.dest.dir}"
+            packagenames="*"
+            author="true"
+            private="true"
+            version="true"
+            use="true"
+            windowtitle="${javadoc.fullname}"
+            doctitle="${javadoc.fullname}"
+            bottom="Copyright &#169; 2004 FoundryLogic, LLC .  All Rights Reserved."
+            sourcepathref="javac.sourcepath"
+            classpathref="javac.classpath"
+        />
+        
+    </target>
+
+	<target name="jar" depends="init" >
+        <jar jarfile="${jar.dest.dir}/${jar.name}.jar" >
+            <fileset dir="${javac.dest.dir}" />
+            <fileset dir="${javac.src.dir}">
+                <include name="**/*.vm" />
+                <include name="**/*.xml" />
+                <include name="**/*.properties" />
+            </fileset>
+        </jar>
+    </target>
+
+    <target name="build-g" depends="debug, clean, compile, jar">
+    </target>
+
+    <target name="build" depends="clean, compile, jar">
+    </target>
+
+    <target name="clean" depends="init">
+        <delete failonerror="false" includeEmptyDirs="true">
+			<fileset dir="${javac.dest.dir}" includes="**/*"/>
+			<fileset dir="${jar.dest.dir}" includes="${jar.name}.jar" />
+        </delete>
+    </target>
+
+    <target name="createProject">
+        <mkdir dir="${basedir}/bin"/>
+        <mkdir dir="${basedir}/build/classes"/>
+        <mkdir dir="${basedir}/build/lib"/>
+        <mkdir dir="${basedir}/build/api"/>
+        <mkdir dir="${basedir}/conf"/>
+        <mkdir dir="${basedir}/doc"/>
+        <mkdir dir="${basedir}/lib"/>
+        <mkdir dir="${basedir}/src"/>
+    </target>
+
+
+</project>
