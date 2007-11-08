@@ -23,17 +23,17 @@ import java.io.*;
  * <p>
  * The following target demonstrates the use of GppFilter:
  * <pre>
- *   &lt;target name="vppfilter" depends="defineTasks"&gt;
+ *   &lt;target name="gppfilter" depends="defineTasks"&gt;
  *       &lt;copy todir="output" overwrite="true"&gt;
  *           &lt;fileset dir="src"&gt;
- *               &lt;include name="**&#047;*.html.vpp"/&gt;
+ *               &lt;include name="**&#047;*.html.gpp"/&gt;
  *           &lt;/fileset&gt;
  *           &lt;filterchain&gt;
- *               &lt;filterreader classname="foundrylogic.vpp.GppFilter"&gt;
- *                   &lt;classpath refid="vppPath"/&gt;
+ *               &lt;filterreader classname="groovytools.ant.gpp.GppFilter"&gt;
+ *                   &lt;classpath refid="gppPath"/&gt;
  *               &lt;/filterreader&gt;
  *           &lt;/filterchain&gt;
- *           &lt;mapper type="glob" from="*.html.vpp" to="*.html"/&gt;
+ *           &lt;mapper type="glob" from="*.html.gpp" to="*.html"/&gt;
  *       &lt;/copy&gt;
  *   &lt;/target&gt;
  * </pre>
@@ -168,10 +168,10 @@ public class GppFilter extends BaseParamFilterReader implements ChainableReader 
             setPreprocessed(true);
         }
         catch(Exception exc) {
-            GppCopyTool vpp = (GppCopyTool)this.gppConfig.getTemplateContext().get("vpp");
+            GppCopyTool gpp = (GppCopyTool)this.gppConfig.getTemplateContext().get("gpp");
             String filename = "<stream>";
-            if(vpp != null) {
-                filename = vpp.getSourceName();
+            if(gpp != null) {
+                filename = gpp.getSourceName();
             }
             BuildException exc2 = new BuildException("error in '" + filename + "': " + exc.getMessage());
             exc2.setStackTrace(exc.getStackTrace());
