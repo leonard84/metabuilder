@@ -31,6 +31,9 @@
 		<property name="ant.jar.name" value="${name}-${version}.jar" />
 		<property name="javac.src.dir" value="src" />
 		<property name="javac.dest.dir" value="build/classes" />
+		<property name="javadoc.dest.dir" value="doc/api" />
+		<property name="javadoc.fullname" value="Groovy Tools - Gpp" />
+		<property name="copyright.year" value="2007" />
 
 	</target>
 
@@ -95,4 +98,30 @@
 	</target>
 
 	<target name="buildDeploy" depends="build, deploy"/>
+
+	<path id="javadocPath">
+		<pathelement path="src"/>
+		<pathelement path="build/classes"/>
+	</path>
+
+    <target name="javadoc" depends="properties" 
+        description="Generates the project's API documentation" >
+        <mkdir dir="${javadoc.dest.dir}"/>
+        
+        <javadoc        
+            sourcepath="${javac.src.dir}" 
+            packagenames="groovytools.ant.gpp.*"
+            destdir="${javadoc.dest.dir}"         
+            author="true"
+            private="false"
+            version="true"
+            use="true"
+            windowtitle="${javadoc.fullname} API ${version}"
+            doctitle="${javadoc.fullname} API ${version}"
+            bottom="Copyright &#169; ${copyright.year} FoundryLogic, LLC. All Rights Reserved."
+        >
+            <classpath refid="classpath"/>
+        </javadoc>
+    </target>
+
 </project>
