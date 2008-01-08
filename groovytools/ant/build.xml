@@ -2,7 +2,7 @@
 	<property environment="env"/>
 
 	<property name="name" value="groovytools-ant" />
-	<property name="version" value="1.0.0" />
+	<property name="version" value="1.0.1" />
 
 	<path id="classpath">
 		<pathelement path="src"/>
@@ -118,7 +118,7 @@
             use="true"
             windowtitle="${javadoc.fullname} API ${version}"
             doctitle="${javadoc.fullname} API ${version}"
-            bottom="Copyright &#169; ${copyright.year} FoundryLogic, LLC. All Rights Reserved."
+            bottom="Copyright &amp;#169; ${copyright.year} FoundryLogic, LLC. All Rights Reserved."
         >
             <classpath refid="classpath"/>
         </javadoc>

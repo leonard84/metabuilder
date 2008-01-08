@@ -9,12 +9,12 @@ import java.util.Map;
 
 public class GppContext extends DataType {
     private GppStackMap templateContext;
-    private List<Configurer> configurerList;
+    private List configurerList;
     private String innerRefId;
     private String eventHandler;
 
     public GppContext() {
-        configurerList = new ArrayList<Configurer>();
+        configurerList = new ArrayList();
     }
 
     public GppStackMap getTemplateContext() {
@@ -25,7 +25,8 @@ public class GppContext extends DataType {
             templateContext.put("ant", getProject().getProperties());
             templateContext.put("project", project);
 
-            for (Configurer configurer : configurerList) {
+            for(int i = 0; i < configurerList.size(); i++) {
+                Configurer configurer = (Configurer)configurerList.get(i);
                 configurer.configure(templateContext, project);
             }
         }
