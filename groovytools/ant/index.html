@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>Gpp index</title>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <meta name="author" content="didge"></head><body>
+<h1>Gpp</h1>
+<h2>What is it?</h2>
+<ul>
+<li><b>Gpp</b> supports general file preprocessing based on the
+<a href="http://groovy.codehaus.org">Groovy</a> Template Engine
+ and <a href="http://ant.apache.org">Ant</a> by providing alternatives to the <code><b>&lt;copy&gt;</b></code> and <code><b>&lt;javac&gt;</b></code>. See the <a href="doc/manual/index.html">manual </a>
+for a complete description.</li>
+</ul>
+<h4>A Quick Example</h4><ul><li><code>Use <b>&lt;gppcopy&gt;
+</b>anywhere you would use </code>Ant's
+regular&nbsp;<code><b>&lt;copy&gt;</b></code> task to preprocess your
+files using the Groovy Template
+Engine.</li><li><code><b>&lt;gppcopy&gt; </b></code>supports all
+of&nbsp;<code><b>&lt;copy&gt;</b></code>'s parameters and nested
+parameters.  <code></code><br></li><li>Access Ant's project properties
+within your templates by invoking
+<tt><b>$ant.<i>propname</i></b></tt>.</li>
+  </ul>
+  <blockquote><pre><b>&lt;target name="gpp"&gt;<br>  &lt;typedef resource="groovtytools/ant/gpp/typedef.properties" /&gt;<br>  &lt;taskdef resource="groovtytools/ant/gpp/taskdef.properties" /&gt;
+</b><b>  <br>  &lt;gppcopy todir="output" overwrite="true"&gt;<br>    &lt;fileset dir="src" includes="*.html.gpp" /&gt;<br>    &lt;mapper type="glob" from="*.html.gpp" to="*.html" /&gt;<br>  &lt;/gppcopy&gt;<br>&lt;/target&gt;<br></b></pre></blockquote>
+   <h4></h4><h2>History</h2>
+      <ul>
+<li>
+<b>Gpp</b> is essentially a Groovy port of 
+<a href="vpp.sourceforge.net">VPP</a>, which was originally based on the 
+Velocity template engine.
+      </ul>
+      <h2>Download and Installation</h2>
+      <ul>
+<li>
+
+Get the latest and greatest release of <b>Gpp </b>from <a href="http://sourceforge.net/projects/groovytools">http://sourceforge.net/projects/groovytools</a>
+.
+</li><li>
+Assuming that you have already installed and configured Ant correctly, you may deploy <b>Gpp </b>by simply executing <tt><b>ant</b></tt> from the location where you installed <b>Gpp</b>.</li><li>
+Alternatively, you may also copy the jar files located in the lib subdirectory to your Ant installation (<tt><b>$ANT_HOME/lib</b></tt>).
+
+</li>
+      </ul>
+      <h2>Documentation and Examples</h2>
+      <ul>
+        <li> See the <a href="doc/manual/index.html">manual</a> for installation, examples, and deatiled explanations.
+        <li> See <a href="example/build.xml" type="text/plain">build.xml</a> 
+        for an quick example of <b>Gpp</b> usage in an ant build file.</li>
+        <li>See <a href="example/src/HelloWorld.html.gpp" 
+            type="text/plain">HelloWorld.html.gpp</a> for an example 
+            template.<br>
+        </li>
+
+      </ul>
+      <h2>Getting Help</h2>
+    <ul><li>Please use the <a href="http://sourceforge.net/forum/?group_id=208227">forums</a> for assistance.
+
+</li>
+      </ul>
+      <h2>Licensing</h2>
+      <ul>
+<li>
+
+
+This software is licensed under <b>LGPL</b>, the terms of which you may find <a href="LICENSE" type="text/plain">here</a>.
+
+</li>
+      </ul>
+      <h2>References</h2>
+      <ul>
+<li><a href="http://groovy.codehaus.org">http://groovy.codehaus.org</a></li>
+<li><a href="http://ant.apache.org">http://ant.apache.org</a></li>
+<li><a href="http://vpp.sourceforge.net">http://vpp.sourceforge.net</a></li>
+      </ul>
+      <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=69524&amp;type=5" width="210" height="62" border="0" alt="SourceForge Logo"></a>
+</body></html>
