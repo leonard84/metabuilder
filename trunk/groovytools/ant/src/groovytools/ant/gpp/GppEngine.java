@@ -11,10 +11,10 @@ import java.util.List;
 
 public class GppEngine extends DataType {
     private TemplateEngine templateEngine;
-    private List<Configurer> configurerList;
+    private List configurerList;
 
     public GppEngine() {
-        configurerList = new ArrayList<Configurer>();
+        configurerList = new ArrayList();
     }
 
     public TemplateEngine getTemplateEngine() {
@@ -24,7 +24,8 @@ public class GppEngine extends DataType {
             try {
                 defaultInit(templateEngine);
                 Project project = getProject();
-                for (Configurer configurer : configurerList) {
+                for(int i = 0; i < configurerList.size(); i++) {
+                    Configurer configurer = (Configurer)configurerList.get(i);
                     configurer.configure(templateEngine, project);
                 }
             }
