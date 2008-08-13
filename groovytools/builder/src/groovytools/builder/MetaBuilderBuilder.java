@@ -1,11 +1,10 @@
 package groovytools.builder;
 
-import groovy.util.*;
 import groovy.lang.*;
+import groovy.util.*;
+import org.codehaus.groovy.runtime.*;
 
 import java.util.*;
-
-import org.codehaus.groovy.runtime.*;
 
 /**
  * This class is the workhorse behind {@link MetaBuilder}.  It is responsible for building object hierarchies according
@@ -76,7 +75,8 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
     }
 
     /**
-     * Finds and returns a child schema with the given name, in the specified container or null if not found.
+     * Finds and returns a child schema with the given name, in the specified container or null if not found.  This
+     * method will also search any super-schemas specified with the 'extend' attribute.
      *
      * @param parentSchema  the parent schema
      * @param containerName the name of a container of child schemas, e.g. collections, properties
@@ -124,31 +124,42 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         // if there are no properties, skip right down to checking for unkown properties
         boolean hasWildCard = ((NodeList)schema.get("%")).size() > 0;
 
-        if(nodeList.size() != 0) {
-            SchemaNode propertySchema = (SchemaNode)nodeList.get(0);
-            hasWildCard = propertySchema.get("%") != null;
+        while(nodeList != null) {
+            if(nodeList.size() > 0) {
+                SchemaNode propertySchema = (SchemaNode)nodeList.get(0);
+                hasWildCard = propertySchema.get("%") != null;
 
-            List propertyList = propertySchema.children();
-            for(int i = 0; i < propertyList.size(); i++) {
-                Node property = (Node)propertyList.get(i);
-                String name = (String)property.name();
-                Boolean req = (Boolean)property.attribute("req");
-                Object def = property.attribute("def");
-                Object val = attCopy.remove(name);
-                if(val == null && def != null) {
-                    val = def;
-                    attributes.put(name, val);
-                }
-                if(val == null && req != null && req.booleanValue()) {
-                    throw createPropertyException(name, "required property missing");
-                }
-                Closure check = (Closure)property.attribute("check");
-                if(check != null) {
-                    Boolean b = (Boolean)check.call(val);
-                    if(b != null && !b.booleanValue()) {
-                        throw createPropertyException(name, "value invalid");
+                List propertyList = propertySchema.children();
+                for(int i = 0; i < propertyList.size(); i++) {
+                    Node property = (Node)propertyList.get(i);
+                    String name = (String)property.name();
+                    Boolean req = (Boolean)property.attribute("req");
+                    Object def = property.attribute("def");
+                    Object val = attCopy.remove(name);
+                    if(val == null && def != null) {
+                        val = def;
+                        attributes.put(name, val);
+                    }
+                    if(val == null && req != null && req.booleanValue()) {
+                        throw createPropertyException(name, "required property missing");
+                    }
+                    Closure check = (Closure)property.attribute("check");
+                    if(check != null) {
+                        Boolean b = (Boolean)check.call(val);
+                        if(b != null && !b.booleanValue()) {
+                            throw createPropertyException(name, "value invalid");
+                        }
                     }
                 }
+            }
+            // check any 'super' schemas for additional properties
+            Node extend = (Node)schema.attribute("extend");
+            if(extend != null) {
+                schema = extend;
+                nodeList = (NodeList)extend.get("properties");
+            }
+            else {
+                nodeList = null;
             }
         }
         if(!hasWildCard) {
