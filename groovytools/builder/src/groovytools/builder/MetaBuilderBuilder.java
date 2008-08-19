@@ -25,6 +25,11 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
     protected Node defaultSchema;
 
     /**
+     * Default factory to use when no other factory has been specified.
+     */
+    protected Factory defaultFactory;
+
+    /**
      * Keeps track of the current schema while descending into an object graph.
      */
     protected LinkedList schemaStack;
@@ -41,13 +46,19 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      * @param defaultSchema the default schema
      * @param classLoader   the {@link ClassLoader} to use
      */
-    public MetaBuilderBuilder(Map schemas, Node defaultSchema, ClassLoader classLoader) {
+    public MetaBuilderBuilder(Map schemas, Node defaultSchema, Factory defaultFactory, ClassLoader classLoader) {
         super();
         this.defaultSchema = defaultSchema;
+        this.defaultFactory = defaultFactory;
         this.schemas = schemas;
         schemaStack = new LinkedList();
         setClassNameResolver(new FactoryClassNameResolver());
         setClassLoader(classLoader);
+        setIdentifierResolver(new IdentifierResolver() {
+            public String getIdentifierFor(String nodeName) {
+                return "ogbid";
+            }
+        });
     }
 
     protected Node getDefaultSchema() {
@@ -99,15 +110,15 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
 
     /**
      * Checks the current set of attributes against the set of properties defined in the current schema's 'properties' node, if any.
-     * <p>
+     * <p/>
      * Checking is done as follows:
      * For each property, attempt to retrieve the corresponding attribute's value.
-     *  <ol>
-     *  <li>If the attribute has not been specified and a default value has been provided, set the value of the
+     * <ol>
+     * <li>If the attribute has not been specified and a default value has been provided, set the value of the
      * attribute to the default value.</li>
-     *  <li>If the attribute has not been specified and no default value has been provided, and the property is required,
+     * <li>If the attribute has not been specified and no default value has been provided, and the property is required,
      * throw a {@link PropertyException}</li>
-     *  <li>If the attribute has been specified and a check provided, check the attribute's value.  If the check returns
+     * <li>If the attribute has been specified and a check provided, check the attribute's value.  If the check returns
      * false, throw a {@link PropertyException}</li>
      * </ol>
      * Further, if the current schema does not include the special property '%' and any attribute is specified that not
@@ -127,27 +138,23 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         while(nodeList != null) {
             if(nodeList.size() > 0) {
                 SchemaNode propertySchema = (SchemaNode)nodeList.get(0);
-                hasWildCard = propertySchema.get("%") != null;
+                hasWildCard = ((NodeList)propertySchema.get("%")).size() > 0;
 
                 List propertyList = propertySchema.children();
                 for(int i = 0; i < propertyList.size(); i++) {
                     Node property = (Node)propertyList.get(i);
                     String name = (String)property.name();
                     Boolean req = (Boolean)property.attribute("req");
-                    Object def = property.attribute("def");
+                    boolean hasDef = property.attributes().containsKey("def");
                     Object val = attCopy.remove(name);
-                    if(val == null && def != null) {
-                        val = def;
-                        attributes.put(name, val);
-                    }
-                    if(val == null && req != null && req.booleanValue()) {
-                        throw createPropertyException(name, "required property missing");
+                    if(val == null && !hasDef && req != null && req.booleanValue()) {
+                        throw MetaBuilder.createPropertyException(name, "required property missing");
                     }
                     Closure check = (Closure)property.attribute("check");
                     if(check != null) {
                         Boolean b = (Boolean)check.call(val);
                         if(b != null && !b.booleanValue()) {
-                            throw createPropertyException(name, "value invalid");
+                            throw MetaBuilder.createPropertyException(name, "value invalid");
                         }
                     }
                 }
@@ -165,7 +172,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         if(!hasWildCard) {
             for(Iterator leftovers = attCopy.keySet().iterator(); leftovers.hasNext();) {
                 String leftover = (String)leftovers.next();
-                throw createPropertyException(leftover, "property unkown");
+                throw MetaBuilder.createPropertyException(leftover, "property unkown");
             }
         }
     }
@@ -220,16 +227,16 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
             }
         }
         if(childSchema == null) {
-            throw createSchemaNotFoundException((String)name);
+            throw MetaBuilder.createSchemaNotFoundException((String)name);
         }
         schemaStack.push(childSchema);
-        checkAttributes(attributes);
         Object node = null;
         try {
             if(builderSuppportProxy == null) {
                 node = super.createNode(name, attributes, value);
             }
             else {
+                checkAttributes(attributes);
                 node = builderSuppportProxy.createNode(name, attributes, value);
             }
         }
@@ -245,8 +252,8 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
             else throw e;
         }
         if(currentSchema == null) {
-            // only null if defining a top level schema
-            schemas.put(name, node);  // it would be nice not to have to cast to Node() to get the name...
+            // will only be null if defining a top level schema
+            schemas.put(name, node);  //
         }
 
         return node;
@@ -280,7 +287,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
             else if(factory instanceof Class) {
                 return ((Class)factory).getName();  // kind of silly...
             }
-            throw createClassNameNotFoundException(className);
+            throw MetaBuilder.createClassNameNotFoundException(className);
         }
     }
 
@@ -315,17 +322,20 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
             // Is it cool to wrap the closure and replace it?
             // It does save having to keep wrapping the closure everytime, but is there a downside?
             ClosureFactoryAdapter closureFactoryAdapter = new ClosureFactoryAdapter((Closure)factory);
-            attributes.put("factory", closureFactoryAdapter);
+            schema.attributes().put("factory", closureFactoryAdapter);
             return closureFactoryAdapter;
         }
         if(factory instanceof String || factory instanceof Class) {
             return super.resolveFactory(name, attributes, value);
         }
-        throw createFactoryException((String)name, " unsupported factory");
+        return defaultFactory;
+        //throw MetaBuilder.createFactoryException((String)name, " unsupported factory");
     }
 
+
+
     /**
-     * Overrides the default implementation to support property name changes defined in the schema.
+     * Overrides the default implementation to support property name changes, default and required values and checking.
      *
      * @param node
      * @param attributes
@@ -338,6 +348,64 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         // had their properties set already
         if(node instanceof Node) return;
 
+        HashMap attCopy = new HashMap(attributes);
+
+        NodeList nodeList = (NodeList)schema.get("properties");
+
+        while(nodeList != null) {
+            if(nodeList.size() > 0) {
+                SchemaNode propertySchema = (SchemaNode)nodeList.get(0);
+
+                List propertyList = propertySchema.children();
+                for(int i = 0; i < propertyList.size(); i++) {
+                    Node property = (Node)propertyList.get(i);
+                    String name = (String)property.name();
+                    Object def = property.attribute("def");
+                    if(attCopy.containsKey(name) || def != null) {
+                        Object val = attCopy.remove(name);
+                        if(val == null && def != null) {
+                            val = def;
+                        }
+                        Closure check = (Closure)property.attribute("check");
+                        if(check != null) {
+                            Boolean b = (Boolean)check.call(val);
+                            if(b != null && !b.booleanValue()) {
+                                throw MetaBuilder.createPropertyException(name, "value invalid");
+                            }
+                        }
+                        setProperty(node, val, name, property);
+                    }
+                    else {
+                        Boolean req = (Boolean)property.attribute("req");
+                        if(req != null && req.booleanValue()) {
+                            throw MetaBuilder.createPropertyException(name, "required property missing");
+                        }
+                    }
+                }
+            }
+            // check any 'super' schemas for additional properties
+            Node extend = (Node)schema.attribute("extend");
+            if(extend != null) {
+                schema = extend;
+                nodeList = (NodeList)extend.get("properties");
+            }
+            else {
+                nodeList = null;
+            }
+        }
+        Node wildCardNode = null;
+        for(Iterator leftovers = attCopy.entrySet().iterator(); leftovers.hasNext();) {
+            Map.Entry leftover = (Map.Entry)leftovers.next();
+            String name = (String)leftover.getKey();
+            Object val = leftover.getValue();
+            if(wildCardNode == null) {
+                wildCardNode = findSchema(schema, "properties", name);
+                if(wildCardNode == null) throw MetaBuilder.createPropertyException(name, "property unkown");
+            }
+            setProperty(node, val, name, wildCardNode);
+        }
+
+        /*
         for(Iterator iter = attributes.entrySet()
                 .iterator(); iter.hasNext();) {
             Map.Entry entry = (Map.Entry)iter.next();
@@ -349,6 +417,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
             }
             setProperty(node, value, propertyNodeName, propertySchema);
         }
+        */
     }
 
     /**
@@ -357,38 +426,25 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      *
      * @param node             the current node
      * @param value            the value of the property
-     * @param propertyNodeName the name of the property as it appears in the script
+     * @param propertyName the name of the property as it appears in the script
      * @param propertySchema   the property's schema
      */
-    protected void setProperty(Object node, Object value, String propertyNodeName, Node propertySchema) {
-        String propertyName = (String)propertySchema.attribute("property");
-        if(propertyName == null) {
-            propertyName = propertyNodeName;
+    protected void setProperty(Object node, Object value, String propertyName, Node propertySchema) {
+        Object propertyAttr = propertySchema.attribute("property");
+        if(propertyAttr != null) {
+            if(propertyAttr instanceof Closure) {
+                Closure propertyClosure = (Closure)propertyAttr;
+                propertyClosure.call(new Object[]{node, value});
+                return;
+            }
+            else if(propertyAttr instanceof String) {
+                propertyName = (String)propertyAttr;
+            }
+            else {
+                throw MetaBuilder.createPropertyException(propertyName, "'property' attribute of schema does not specify a string or closure.");
+            }
         }
         InvokerHelper.setProperty(node, propertyName, value);
-    }
-
-    protected RuntimeException createPropertyException(String name, String error) {
-        StringBuilder message = new StringBuilder("Property '").append(name).append("': ").append(error);
-        return new PropertyException(message.toString());
-
-    }
-
-    protected RuntimeException createFactoryException(String name, String error) {
-        StringBuilder message = new StringBuilder("'").append(name).append("' factory: ").append(error);
-        return new FactoryException(message.toString());
-
-    }
-
-    protected RuntimeException createSchemaNotFoundException(String name) {
-        StringBuilder message = new StringBuilder(name);
-        return new SchemaNotFoundException(message.toString());
-
-    }
-
-    protected RuntimeException createClassNameNotFoundException(String name) {
-        StringBuilder message = new StringBuilder(name);
-        return new ClassNameNotFoundException(message.toString());
     }
 
     /**

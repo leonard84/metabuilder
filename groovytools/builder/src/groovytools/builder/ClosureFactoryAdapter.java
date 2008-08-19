@@ -10,6 +10,7 @@ import java.util.*;
  * method.  It is important that the {@link Closure} supports the proper number, type and
  * order of arguments as follows:
  * <ol>
+ * <li>If no arguments are supported, it is called without arguments.</li>
  * <li>If one argument is supported, it is the node's name.</li>
  * <li>If two arguments are supported, they are the node's name and value.</li>
  * <li>If three arguments are supported, they are the node's name, value, and attributes.</li>
@@ -35,6 +36,7 @@ public class ClosureFactoryAdapter extends AbstractFactory {
      */
     public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
         switch (closure.getMaximumNumberOfParameters()) {
+            case 0: return closure.call();
             case 1: return closure.call(new Object[] {name});
             case 2: return closure.call(new Object[] {name, value});
             default: return closure.call(new Object[] {name, value, attributes});
