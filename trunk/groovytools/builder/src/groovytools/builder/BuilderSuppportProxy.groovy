@@ -1,7 +1,7 @@
 package groovytools.builder
 /**
  * Wraps an object that supports the {@link BuilderSupport} methods and provides a public interface so that its
- * methods can be delegated to by another builder.
+ * methods can be delegated to by another builder.  Note, the target builder need not actually extend {@link BuilderSupport}.
  */
 class BuilderSuppportProxy extends BuilderSupport {
 
