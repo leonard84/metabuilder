@@ -1,7 +1,7 @@
 package groovytools.builder;
 
-import groovy.util.*;
 import groovy.lang.*;
+import groovy.util.*;
 
 import java.util.*;
 
@@ -12,20 +12,35 @@ import java.util.*;
  * @see ObjectGraphBuilder
  */
 public class MetaBuilder extends GroovyObjectSupport {
-    protected Map schemas;
-    protected Node defaultSchema;
-    protected ClassLoader classLoader;
-    protected BuilderSuppportProxy builderSuppportProxy;
-
-    protected Factory defaultFactory;
+    private Map schemas;
+    private Node defaultSchema;
+    private ClassLoader classLoader;
+    private Factory defaultNodeFactory;
 
     /**
-     * Constructs a <code>MetaBuilder</code> with the default schema.
+     * Constructs a <code>MetaBuilder</code> with the default meta schema, node factory and class loader.
      *
      * @see #createDefaultMetaSchema()
+     * @see #createDefaultNodeFactory()
      */
     public MetaBuilder() {
-        this(createDefaultMetaSchema(), new SchemaNodeFactory());
+        this(null, null, null);
+        this.classLoader = getClass().getClassLoader();
+        this.defaultNodeFactory = createDefaultNodeFactory();
+        this.defaultSchema = createDefaultMetaSchema();
+    }
+
+    /**
+     * Constructs a <code>MetaBuilder</code> with the default meta schema, node factory and specified class loader.
+     *
+     * @see #createDefaultMetaSchema()
+     * @see #createDefaultNodeFactory()
+     * @param classLoader
+     */
+    public MetaBuilder(ClassLoader classLoader) {
+        this(null, null, classLoader);
+        this.defaultNodeFactory = createDefaultNodeFactory();
+        this.defaultSchema = createDefaultMetaSchema();
     }
 
     /**
@@ -33,10 +48,15 @@ public class MetaBuilder extends GroovyObjectSupport {
      *
      * @param defaultSchema the default schema
      */
-    public MetaBuilder(Node defaultSchema, Factory defaultFactory) {
+    public MetaBuilder(Node defaultSchema, Factory defaultNodeFactory, ClassLoader classLoader) {
         schemas = new HashMap();
         this.defaultSchema = defaultSchema;
-        this.defaultFactory = defaultFactory;
+        this.defaultNodeFactory = defaultNodeFactory;
+        this.classLoader = classLoader;
+    }
+
+    protected SchemaNodeFactory createDefaultNodeFactory() {
+        return new SchemaNodeFactory();
     }
 
     /**
@@ -63,7 +83,7 @@ public class MetaBuilder extends GroovyObjectSupport {
      *
      * @return see above
      */
-    public static Node createDefaultMetaSchema() {
+    public Node createDefaultMetaSchema() {
 
         Factory schemaNodeFactory = new SchemaNodeFactory();
         Factory collectionNodeFactory = new CollectionSchemaNodeFactory();
@@ -106,7 +126,7 @@ public class MetaBuilder extends GroovyObjectSupport {
      * @return
      */
     public Object define(Closure c) {
-        c.setDelegate(new MetaBuilderBuilder(schemas, defaultSchema, defaultFactory, classLoader != null ? classLoader : getClass().getClassLoader()));
+        c.setDelegate(createMetaBuilderBuilder(getDefaultSchema()));
         c.setResolveStrategy(Closure.DELEGATE_FIRST);
         Object schema = c.call();
         return schema;
@@ -114,26 +134,10 @@ public class MetaBuilder extends GroovyObjectSupport {
     }
 
     public Object build(Closure c) {
-        c.setDelegate(new MetaBuilderBuilder(schemas, null, defaultFactory, classLoader != null ? classLoader : getClass().getClassLoader()));
+        c.setDelegate(createMetaBuilderBuilder(null));
         c.setResolveStrategy(Closure.DELEGATE_FIRST);
         Object schema = c.call();
         return schema;
-    }
-
-    public Object build(Object builder) {
-        builderSuppportProxy = new BuilderSuppportProxy(builder);
-        return this;
-    }
-
-    public Object build(Object builder, Closure c) {
-        builderSuppportProxy = new BuilderSuppportProxy(builder);
-        MetaBuilderBuilder metaBuilderBuilder = new MetaBuilderBuilder(schemas, null, defaultFactory,  classLoader != null ? classLoader : getClass().getClassLoader());
-        metaBuilderBuilder.setBuilderSupportProxy(builderSuppportProxy);
-        c.setDelegate(metaBuilderBuilder);
-        c.setResolveStrategy(Closure.DELEGATE_FIRST);
-        Object schema = c.call();
-        return schema;
-
     }
 
     /**
@@ -169,12 +173,12 @@ public class MetaBuilder extends GroovyObjectSupport {
         return defaultSchema;
     }
 
-    public Factory getDefaultFactory() {
-        return defaultFactory;
+    public Factory getDefaultNodeFactory() {
+        return defaultNodeFactory;
     }
 
-    public BuilderSuppportProxy getBuilderSuppportProxy() {
-        return builderSuppportProxy;
+    public MetaObjectGraphBuilder createMetaBuilderBuilder(Node defaultSchema) {
+        return new MetaObjectGraphBuilder(this, defaultSchema);
     }
 
     /**
@@ -185,32 +189,6 @@ public class MetaBuilder extends GroovyObjectSupport {
      */
     public void setClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
-    }
-
-    /**
-     * Overrides default implementation to delegate to a new {@link MetaBuilderBuilder}.  This is method by which
-     * {@link MetaBuilder} supports nested definitions.
-     *
-     * @return the result of the call
-     * @param methodName the name of the method to invoke
-     */
-    public Object invokeMethod(String methodName) {
-        MetaBuilderBuilder mbb = new MetaBuilderBuilder(schemas, null, defaultFactory, classLoader != null ? classLoader : getClass().getClassLoader());
-        mbb.setBuilderSupportProxy(builderSuppportProxy);
-            return mbb.invokeMethod(methodName);
-    }
-
-    /**
-     * Overrides default implementation to delegate to a new {@link MetaBuilderBuilder}.  This is method by which
-     * {@link MetaBuilder} supports nested definitions.
-     *
-     * @return the result of the call
-     * @param methodName the name of the method to invoke
-     */
-    public Object invokeMethod(String methodName, Object args) {
-        MetaBuilderBuilder mbb = new MetaBuilderBuilder(schemas, null, defaultFactory, classLoader != null ? classLoader : getClass().getClassLoader());
-        mbb.setBuilderSupportProxy(builderSuppportProxy);
-        return mbb.invokeMethod(methodName, args);
     }
 
     public static RuntimeException createPropertyException(String name, String error) {

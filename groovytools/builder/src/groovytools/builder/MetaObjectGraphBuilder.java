@@ -12,65 +12,53 @@ import java.util.*;
  *
  * @author didge
  */
-public class MetaBuilderBuilder extends ObjectGraphBuilder {
+public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 
     /**
-     * Map of stored schemas for reuse.
+     * The {@link MetaBuilder} that owns this {@link MetaObjectGraphBuilder}.
      */
-    protected Map schemas;
+    private MetaBuilder metaBuilder;
 
     /**
-     * Default schema for use when no other schema has been specified.
+     * The default schema.
      */
-    protected Node defaultSchema;
-
-    /**
-     * Default factory to use when no other factory has been specified.
-     */
-    protected Factory defaultFactory;
+    private Node defaultSchema;
 
     /**
      * Keeps track of the current schema while descending into an object graph.
      */
-    protected LinkedList schemaStack;
+    private LinkedList schemaStack;
 
     /**
-     * Allows {@link MetaBuilderBuilder} to delegate to another builder for node creation.
-     */
-    protected BuilderSuppportProxy builderSuppportProxy;
-
-    /**
-     * Constructs a {@link MetaBuilderBuilder}.
+     * Constructs a {@link MetaObjectGraphBuilder}.
      *
-     * @param schemas       an initial set of schemas, may be empty, but must not be null
-     * @param defaultSchema the default schema
-     * @param classLoader   the {@link ClassLoader} to use
+     * @param metaBuilder the {@link MetaBuilder} providing the build context
      */
-    public MetaBuilderBuilder(Map schemas, Node defaultSchema, Factory defaultFactory, ClassLoader classLoader) {
+    public MetaObjectGraphBuilder(MetaBuilder metaBuilder, Node defaultSchema) {
         super();
-        this.defaultSchema = defaultSchema;
-        this.defaultFactory = defaultFactory;
-        this.schemas = schemas;
+        this.metaBuilder = metaBuilder;
         schemaStack = new LinkedList();
-        setClassNameResolver(new FactoryClassNameResolver());
-        setClassLoader(classLoader);
-        setIdentifierResolver(new IdentifierResolver() {
-            public String getIdentifierFor(String nodeName) {
-                return "ogbid";
-            }
-        });
+        this.defaultSchema = defaultSchema;
+
+        setClassNameResolver(createClassNameResolver());
+        setClassLoader(metaBuilder.getClassLoader());
+        setIdentifierResolver(createIdentifierResolver());
     }
 
-    protected Node getDefaultSchema() {
-        return defaultSchema;
+    public MetaBuilder getMetaBuilder() {
+        return metaBuilder;
     }
 
-    public Object getBuilderSupportProxy() {
-        return builderSuppportProxy;
+    protected void pushSchema(Node schema) {
+        schemaStack.push(schema);
     }
 
-    public void setBuilderSupportProxy(BuilderSuppportProxy builderSuppportProxy) {
-        this.builderSuppportProxy = builderSuppportProxy;
+    protected Node popSchema() {
+        return (Node)schemaStack.pop();
+    }
+
+    protected Node getCurrentSchema() {
+        return (Node)schemaStack.peek();
     }
 
     /**
@@ -81,7 +69,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      */
     protected Node resolveSchemaRef(Object schemaRef) {
         return schemaRef instanceof String
-                ? (Node)schemas.get(schemaRef)
+                ? (Node)metaBuilder.getSchema((String)schemaRef)
                 : (Node)schemaRef;
     }
 
@@ -129,7 +117,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
     protected void checkAttributes(Map attributes) {
         HashMap attCopy = new HashMap(attributes);
 
-        Node schema = (Node)schemaStack.peek();
+        Node schema = getCurrentSchema();
 
         NodeList nodeList = (NodeList)schema.get("properties");
         // if there are no properties, skip right down to checking for unkown properties
@@ -186,13 +174,13 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      * @return a node
      */
     protected Object createNode(Object name, Map attributes, Object value) {
-        Node currentSchema = (Node)schemaStack.peek();
+        Node currentSchema = getCurrentSchema();
         Node childSchema = null;
         if(currentSchema == null) {
-            currentSchema = (Node)schemas.get(name);
+            currentSchema = (Node)metaBuilder.getSchema((String)name);
         }
         if(currentSchema == null) {
-            childSchema = getDefaultSchema();
+            childSchema = defaultSchema;
         }
         else if(getCurrent() == null) {
             String rootName = (String)currentSchema.name();
@@ -204,6 +192,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         else {
             Node propertySchema = findSchema(currentSchema, "properties", (String)name);
             // supports setting a property not as an attribute, but like propname(value)
+            // todo - didge: req:true is checked in setNodeAttributes(), so any properties set this way can't be required proprerties (at least not yet)
             if(propertySchema != null) {
                 // simply set simple values, otherwise, build the property value like any other node
                 if(attributes == Collections.EMPTY_MAP && value != null) {
@@ -229,16 +218,12 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         if(childSchema == null) {
             throw MetaBuilder.createSchemaNotFoundException((String)name);
         }
-        schemaStack.push(childSchema);
+
+        pushSchema(childSchema);
+
         Object node = null;
         try {
-            if(builderSuppportProxy == null) {
-                node = super.createNode(name, attributes, value);
-            }
-            else {
-                checkAttributes(attributes);
-                node = builderSuppportProxy.createNode(name, attributes, value);
-            }
+            node = super.createNode(name, attributes, value);
         }
         catch(RuntimeException e) {
             // If FactoryBuilderSupport throws an exception caused by
@@ -253,7 +238,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         }
         if(currentSchema == null) {
             // will only be null if defining a top level schema
-            schemas.put(name, node);  //
+            metaBuilder.addSchema((String)name, node);
         }
 
         return node;
@@ -266,21 +251,40 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      * @param node
      */
     protected void nodeCompleted(Object parent, Object node) {
-        schemaStack.pop();
-        if(builderSuppportProxy != null) {
-            builderSuppportProxy.nodeCompleted(parent, node);
-        }
-        else {
-            super.nodeCompleted(parent, node);
-        }
+        popSchema();
+        super.nodeCompleted(parent, node);
     }
 
     /**
-     * Overrides the default implementation to support resolution of the factory name in a schema attribute.
+     * Override to modify the {@link IdentifierResolver} behavior.
+     *
+     * @return see above
      */
-    public class FactoryClassNameResolver implements ClassNameResolver {
+    protected IdentifierResolver createIdentifierResolver() {
+        // id is a pretty common property name, so rename it
+        return new ObjectGraphBuilder.IdentifierResolver() {
+            public String getIdentifierFor(String nodeName) {
+                return "metaId";
+            }
+        };
+    }
+
+    /**
+     * Override to modify the {@link ClassNameResolver} behavior.
+     *
+     * @return see above
+     */
+    protected ClassNameResolver createClassNameResolver() {
+        return new MetaObjectGraphBuilder.FactoryClassNameResolver();
+    }
+
+    /**
+     * Overrides the default implementation in {@link ObjectGraphBuilder.ClassNameResolver} in order to support
+     * resolution of the class name using the <code>factory</code> schema attribute.
+     */
+    public class FactoryClassNameResolver implements ObjectGraphBuilder.ClassNameResolver {
         public String resolveClassname(String className) {
-            Node schema = (Node)schemaStack.peek();
+            Node schema = getCurrentSchema();
             Object factory = schema.attribute("factory");
             if(factory instanceof String)
                 return (String)factory;
@@ -310,7 +314,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      * @return
      */
     protected Factory resolveFactory(Object name, Map attributes, Object value) {
-        Node schema = (Node)schemaStack.peek();
+        Node schema = getCurrentSchema();
         if(schema instanceof Factory) {
             return (Factory)schema;
         }
@@ -328,11 +332,9 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
         if(factory instanceof String || factory instanceof Class) {
             return super.resolveFactory(name, attributes, value);
         }
-        return defaultFactory;
+        return metaBuilder.getDefaultNodeFactory();
         //throw MetaBuilder.createFactoryException((String)name, " unsupported factory");
     }
-
-
 
     /**
      * Overrides the default implementation to support property name changes, default and required values and checking.
@@ -342,7 +344,7 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      * @see #setProperty(Object, Object, String, Node)
      */
     protected void setNodeAttributes(Object node, Map attributes) {
-        Node schema = (Node)schemaStack.peek();
+        Node schema = getCurrentSchema();
 
         // skip setting properties on Nodes because they
         // had their properties set already
@@ -404,30 +406,16 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
             }
             setProperty(node, val, name, wildCardNode);
         }
-
-        /*
-        for(Iterator iter = attributes.entrySet()
-                .iterator(); iter.hasNext();) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            Object value = entry.getValue();
-            String propertyNodeName = entry.getKey().toString();
-            Node propertySchema = findSchema(schema, "properties", propertyNodeName);
-            if(propertySchema == null) {
-                throw createPropertyException(propertyNodeName, "property unknown");
-            }
-            setProperty(node, value, propertyNodeName, propertySchema);
-        }
-        */
     }
 
     /**
      * Sets a node's property value, allowing for property renaming.  The property name is taken from the property
      * schema's <code>property</code> attribute, if any, else the property node name is used by default.
      *
-     * @param node             the current node
-     * @param value            the value of the property
-     * @param propertyName the name of the property as it appears in the script
-     * @param propertySchema   the property's schema
+     * @param node           the current node
+     * @param value          the value of the property
+     * @param propertyName   the name of the property as it appears in the script
+     * @param propertySchema the property's schema
      */
     protected void setProperty(Object node, Object value, String propertyName, Node propertySchema) {
         Object propertyAttr = propertySchema.attribute("property");
@@ -454,52 +442,11 @@ public class MetaBuilderBuilder extends ObjectGraphBuilder {
      * @param child
      */
     protected void setParent(Object parent, Object child) {
-        if(builderSuppportProxy != null) {
-            builderSuppportProxy.setParent(parent, child);
-        }
-        else {
-            FactoryBuilderSupport proxyBuilder = getProxyBuilder();
-            proxyBuilder.getCurrentFactory().setParent(this, parent, child);
-            Factory parentFactory = proxyBuilder.getParentFactory();
-            if(child instanceof CollectionSchemaNode == false && parentFactory != null) {
-                parentFactory.setChild(this, parent, child);
-            }
-        }
-    }
-
-    /**
-     * Used in a couple of places to provide a {@link Factory} when delegating to another builder to satisfy
-     * {@link FactoryBuilderSupport}.
-     */
-    protected static final Factory builderFactoryAdapter = new Factory() {
-        public boolean isLeaf() {
-            return false;
-        }
-
-        public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-            return null;
-        }
-
-        public boolean onHandleNodeAttributes(FactoryBuilderSupport builder, Object node, Map attributes) {
-            return false;
-        }
-
-        public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        }
-
-        public void setParent(FactoryBuilderSupport builder, Object parent, Object child) {
-        }
-
-        public void setChild(FactoryBuilderSupport builder, Object parent, Object child) {
-        }
-    };
-
-    public Factory getCurrentFactory() {
-        if(builderSuppportProxy != null) {
-            return builderFactoryAdapter;
-        }
-        else {
-            return super.getCurrentFactory();
+        FactoryBuilderSupport proxyBuilder = getProxyBuilder();
+        proxyBuilder.getCurrentFactory().setParent(this, parent, child);
+        Factory parentFactory = proxyBuilder.getParentFactory();
+        if(child instanceof CollectionSchemaNode == false && parentFactory != null) {
+            parentFactory.setChild(this, parent, child);
         }
     }
 }

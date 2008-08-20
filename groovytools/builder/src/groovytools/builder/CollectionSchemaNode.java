@@ -189,7 +189,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             }
         }
         catch(Exception e) {
-            throw new CollectionException((String)name());
+            throw new CollectionException((String)name(), e);
         }
     }
 }
