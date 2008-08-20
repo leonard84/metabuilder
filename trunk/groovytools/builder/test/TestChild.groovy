@@ -1,0 +1,6 @@
+/**
+ */
+class TestChild {
+    String name
+
+}
