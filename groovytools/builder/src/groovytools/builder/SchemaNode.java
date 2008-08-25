@@ -1,11 +1,14 @@
 package groovytools.builder;
 
-import java.util.*;
-
 import groovy.util.*;
 
+import java.util.*;
+
 /**
- * {@link SchemaNode} simply extends {@link Node} with some extra functionality to append nodes together more flexibily.
+ * {@link SchemaNode} simply extends {@link Node} with some extra functionality to support cyclical graphs
+ *
+ * @author didge
+ * @version $REV$
  */
 public class SchemaNode extends Node{
 

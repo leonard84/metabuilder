@@ -15,6 +15,9 @@ import java.util.*;
  * <li>If two arguments are supported, they are the node's name and value.</li>
  * <li>If three arguments are supported, they are the node's name, value, and attributes.</li>
  * </ol>
+ *
+ * @author didge
+ * @version $REV$
  */
 public class ClosureFactoryAdapter extends AbstractFactory {
     protected Closure closure;

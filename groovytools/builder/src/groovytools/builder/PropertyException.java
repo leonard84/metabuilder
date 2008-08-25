@@ -1,7 +1,10 @@
 package groovytools.builder;
 
 /**
- * Thrown when
+ * Thrown when accessing or setting a property.
+ *
+ * @author didge
+ * @version $REV$
  */
 public class PropertyException extends MetaBuilderException {
     public PropertyException() {
