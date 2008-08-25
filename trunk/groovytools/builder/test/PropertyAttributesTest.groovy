@@ -1,5 +1,4 @@
 import groovytools.builder.MetaBuilder
-import groovytools.builder.MetaBuilder2
 
 /**
  */
@@ -24,13 +23,13 @@ class PropertyAttributesTest extends GroovyTestCase {
         }
 
         def parent1 = mb.build { parent(name: 'Lists of Children1') }
-        assertEquals("parent name ", 'Lists of Children1', parent1.name)
+        assertEquals('Lists of Children1', parent1.name)
 
         def parent2 = mb.build { parent(name: 'Lists of Children2') }
-        assertEquals("parent1 name ", 'Lists of Children2', parent2.name)
+        assertEquals('Lists of Children2', parent2.name)
 
         def parent3 = mb.build { parent(name: 'Lists of Children3') }
-        assertEquals("parent2 name ", 'Lists of Children3', parent3.name)
+        assertEquals('Lists of Children3', parent3.name)
     }
 
     public static void main(String[] args) {

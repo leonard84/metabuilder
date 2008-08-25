@@ -10,36 +10,36 @@ import java.util.*;
  * build object hierarchies.
  *
  * @see ObjectGraphBuilder
+ *
+ * @author didge
+ * @version $REV$
  */
 public class MetaBuilder extends GroovyObjectSupport {
     private Map schemas;
     private Node defaultSchema;
     private ClassLoader classLoader;
-    private Factory defaultNodeFactory;
+    private Factory defaultBuildNodeFactory;
+    private Factory defaultDefineNodeFactory;
 
     /**
      * Constructs a <code>MetaBuilder</code> with the default meta schema, node factory and class loader.
      *
      * @see #createDefaultMetaSchema()
-     * @see #createDefaultNodeFactory()
      */
     public MetaBuilder() {
-        this(null, null, null);
+        this(null, null);
         this.classLoader = getClass().getClassLoader();
-        this.defaultNodeFactory = createDefaultNodeFactory();
         this.defaultSchema = createDefaultMetaSchema();
     }
 
     /**
      * Constructs a <code>MetaBuilder</code> with the default meta schema, node factory and specified class loader.
      *
-     * @see #createDefaultMetaSchema()
-     * @see #createDefaultNodeFactory()
      * @param classLoader
+     * @see #createDefaultMetaSchema()
      */
     public MetaBuilder(ClassLoader classLoader) {
-        this(null, null, classLoader);
-        this.defaultNodeFactory = createDefaultNodeFactory();
+        this(null, classLoader);
         this.defaultSchema = createDefaultMetaSchema();
     }
 
@@ -48,15 +48,30 @@ public class MetaBuilder extends GroovyObjectSupport {
      *
      * @param defaultSchema the default schema
      */
-    public MetaBuilder(Node defaultSchema, Factory defaultNodeFactory, ClassLoader classLoader) {
+    public MetaBuilder(Node defaultSchema, ClassLoader classLoader) {
         schemas = new HashMap();
         this.defaultSchema = defaultSchema;
-        this.defaultNodeFactory = defaultNodeFactory;
+        this.defaultBuildNodeFactory = createDefaultBuildNodeFactory();
+        this.defaultDefineNodeFactory = createDefaultDefineNodeFactory();
         this.classLoader = classLoader;
     }
 
-    protected SchemaNodeFactory createDefaultNodeFactory() {
-        return new SchemaNodeFactory();
+    /**
+     * Subclasses may override this to specify an alternative factory for defining schema.
+     *
+     * @return see above
+     */
+    protected Factory createDefaultDefineNodeFactory() {
+        return new DefaultDefineSchemaNodeFactory();
+    }
+
+    /**
+     * Subclasses may override this to specify an alternative factory for building object
+     *
+     * @return see above
+     */
+    protected Factory createDefaultBuildNodeFactory() {
+        return new DefaultBuildSchemaNodeFactory();
     }
 
     /**
@@ -64,55 +79,76 @@ public class MetaBuilder extends GroovyObjectSupport {
      * <pre>
      * schemaNodeFactory = new MetaBuilder.SchemaNodeFactory()
      * collectionSchemaNodeFactory = new MetaBuilder.CollectionSchemaNodeFactory()
-     *
-     * metaSchema(factory: schemaNodeFactory) {
+     * <p/>
+     * def metaSchema = '%'(factory: schemaNodeFactory) {
+     *     properties() {
+     *         schema()
+     *         factory()
+     *     }
      *     collections() {
      *         collections(factory: schemaNodeFactory) {
      *             '%'(factory: collectionSchemaNodeFactory) {
-     *                 '%'(schema: metaSchema)
+     *                 properties(factory: schemaNodeFactory) {
+     *                     collection()
+     *                     add()
+     *                     key()
+     *                 }
+     *                 '%'(shema: metaSchema)
      *             }
      *             properties(factory: schemaNodeFactory) {
      *                 '%'(schema: metaSchema)
+     *                     properties() {
+     *                         property()
+     *                         check()
+     *                         req()
+     *                         def()
+     *                     }
+     *                 }
      *             }
      *         }
      *     }
-     *     '%'(schema: metaSchema)
      * }
      *  </pre>
      * Subclasses may override this method to implement their own default meta schemas as needed.
      *
      * @return see above
      */
-    public Node createDefaultMetaSchema() {
+    protected Node createDefaultMetaSchema() {
 
-        Factory schemaNodeFactory = new SchemaNodeFactory();
-        Factory collectionNodeFactory = new CollectionSchemaNodeFactory();
+        Factory schemaNodeFactory = new DefaultDefineSchemaNodeFactory();
+        Factory collectionNodeFactory = new DefaultCollectionSchemaNodeFactory();
 
         SchemaNode metaSchema = new SchemaNode(null, "%");
         metaSchema.attributes().put("factory", schemaNodeFactory);
 
-/*
-        SchemaNode metaSchemaPropMetaSchema = new SchemaNode(metaSchema, "properties");
-        metaSchemaPropMetaSchema.attributes().put("factory", schemaNodeFactory);
-        Node metaSchemaPropSchema = new SchemaNode(metaSchemaPropMetaSchema , "%");
-        metaSchemaPropSchema.attributes().put("schema", metaSchema);
-*/
+        SchemaNode propertiesMetaSchema = new SchemaNode(metaSchema, "properties");
+        propertiesMetaSchema.attributes().put("factory", schemaNodeFactory);
+        SchemaNode schemaNode = new SchemaNode(propertiesMetaSchema, "schema");
+        SchemaNode factoryNode = new SchemaNode(propertiesMetaSchema, "factory");
+        SchemaNode propertyNode = new SchemaNode(propertiesMetaSchema, "property");
+        SchemaNode reqNode = new SchemaNode(propertiesMetaSchema, "req");
+        SchemaNode defNode = new SchemaNode(propertiesMetaSchema, "def");
+        SchemaNode checkNode = new SchemaNode(propertiesMetaSchema, "check");
+
         SchemaNode colsMetaSchema = new SchemaNode(metaSchema, "collections");
         SchemaNode colsSchema = new SchemaNode(colsMetaSchema, "collections");
         colsSchema.attributes().put("factory", schemaNodeFactory);
 
-        SchemaNode colSchema = new SchemaNode(colsSchema, "%");  // allows the collection to have any name
+        SchemaNode colSchema = new SchemaNode(colsSchema, "%");  // allows the collection to have any name, e.g. foos
         colSchema.attributes().put("factory", collectionNodeFactory);
 
-        Node colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name
+        SchemaNode colPropertiesSchema = new SchemaNode(colSchema, "properties");
+        SchemaNode colNode = new SchemaNode(colPropertiesSchema, "collection");
+        SchemaNode addNode = new SchemaNode(colPropertiesSchema, "add");
+        SchemaNode keyNode = new SchemaNode(colPropertiesSchema, "key");
+
+        SchemaNode colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name, e.g. foo
         colElementSchema.attributes().put("schema", metaSchema);
 
-        SchemaNode propMetaSchema = new SchemaNode(colsMetaSchema, "properties");
-        propMetaSchema.attributes().put("factory", schemaNodeFactory);
-        Node propSchema = new SchemaNode(propMetaSchema, "%");
-        propSchema.attributes().put("schema", metaSchema);
+        SchemaNode colsPropertiesSchema = new SchemaNode(colsMetaSchema, "properties");
+        colsPropertiesSchema.attributes().put("factory", schemaNodeFactory);
 
-        SchemaNode childMetaSchema = new SchemaNode(metaSchema, "%");
+        SchemaNode childMetaSchema = new SchemaNode(colsPropertiesSchema, "%");
         childMetaSchema.attributes().put("schema", metaSchema);
 
         return metaSchema;
@@ -126,7 +162,7 @@ public class MetaBuilder extends GroovyObjectSupport {
      * @return
      */
     public Object define(Closure c) {
-        c.setDelegate(createMetaBuilderBuilder(getDefaultSchema()));
+        c.setDelegate(createMetaObjectGraphBuilder(getDefaultSchema(), defaultDefineNodeFactory));
         c.setResolveStrategy(Closure.DELEGATE_FIRST);
         Object schema = c.call();
         return schema;
@@ -134,7 +170,7 @@ public class MetaBuilder extends GroovyObjectSupport {
     }
 
     public Object build(Closure c) {
-        c.setDelegate(createMetaBuilderBuilder(null));
+        c.setDelegate(createMetaObjectGraphBuilder(null, defaultBuildNodeFactory));
         c.setResolveStrategy(Closure.DELEGATE_FIRST);
         Object schema = c.call();
         return schema;
@@ -169,16 +205,24 @@ public class MetaBuilder extends GroovyObjectSupport {
         return classLoader;
     }
 
+    /**
+     * Returns the default schema.
+     *
+     * @return see above
+     */
     public Node getDefaultSchema() {
         return defaultSchema;
     }
 
-    public Factory getDefaultNodeFactory() {
-        return defaultNodeFactory;
-    }
-
-    public MetaObjectGraphBuilder createMetaBuilderBuilder(Node defaultSchema) {
-        return new MetaObjectGraphBuilder(this, defaultSchema);
+    /**
+     * Returns a new {@link MetaObjectGraphBuilder} with the given default schema and node factory
+     *
+     * @param defaultSchema
+     * @param defaultNodeFactory
+     * @return see above
+     */
+    protected MetaObjectGraphBuilder createMetaObjectGraphBuilder(Node defaultSchema, Factory defaultNodeFactory) {
+        return new MetaObjectGraphBuilder(this, defaultSchema, defaultNodeFactory);
     }
 
     /**
@@ -194,19 +238,36 @@ public class MetaBuilder extends GroovyObjectSupport {
     public static RuntimeException createPropertyException(String name, String error) {
         StringBuilder message = new StringBuilder("Property '").append(name).append("': ").append(error);
         return new PropertyException(message.toString());
+    }
 
+    public static RuntimeException createPropertyException(String name, Throwable error) {
+        StringBuilder message = new StringBuilder("Property '").append(name).append("': ").append(error);
+        return new PropertyException(message.toString(), error);
+    }
+
+    public static RuntimeException createCollectionException(String name, String error) {
+        StringBuilder message = new StringBuilder("Collection '").append(name).append("': ").append(error);
+        return new CollectionException(message.toString());
+    }
+
+    public static RuntimeException createCollectionException(String name, Throwable error) {
+        StringBuilder message = new StringBuilder("Collection '").append(name).append("': ").append(error);
+        return new CollectionException(message.toString(), error);
     }
 
     public static RuntimeException createFactoryException(String name, String error) {
         StringBuilder message = new StringBuilder("'").append(name).append("' factory: ").append(error);
         return new FactoryException(message.toString());
+    }
 
+    public static RuntimeException createFactoryException(String name, Throwable error) {
+        StringBuilder message = new StringBuilder("'").append(name).append("' factory: ").append(error);
+        return new FactoryException(message.toString(), error);
     }
 
     public static RuntimeException createSchemaNotFoundException(String name) {
         StringBuilder message = new StringBuilder(name);
         return new SchemaNotFoundException(message.toString());
-
     }
 
     public static RuntimeException createClassNameNotFoundException(String name) {
@@ -214,17 +275,39 @@ public class MetaBuilder extends GroovyObjectSupport {
         return new ClassNameNotFoundException(message.toString());
     }
 
-    private static class SchemaNodeFactory extends AbstractFactory {
+    /**
+     * Default {@link SchemaNode} factory used when {@link MetaBuilder#define} is called.  Differs from
+     * {@link DefaultBuildSchemaNodeFactory} in that it does include {@link CollectionSchemaNode}s in the result.
+     */
+    protected static class DefaultDefineSchemaNodeFactory extends AbstractFactory {
         public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-            if(attributes == null) attributes = new HashMap();
-            if(value == null) value = new NodeList();
-            return new SchemaNode((SchemaNode)builder.getCurrent(), name, attributes, value);
+            return new SchemaNode((SchemaNode)builder.getCurrent(), name);
         }
     }
 
-    private static class CollectionSchemaNodeFactory extends AbstractFactory {
+    /**
+     * Default {@link SchemaNode} factory used when {@link MetaBuilder#build} is called.  Differs from 
+     * {@link DefaultDefineSchemaNodeFactory} in that it doesn't include {@link CollectionSchemaNode}s in the result.
+     */
+    protected static class DefaultBuildSchemaNodeFactory extends AbstractFactory {
         public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-            return new CollectionSchemaNode((SchemaNode)builder.getCurrent(), name, attributes, value);
+            if(attributes == null) attributes = new HashMap();
+            if(value == null) value = new NodeList();
+            SchemaNode schemaNode = (SchemaNode)builder.getCurrent();
+            if(schemaNode instanceof CollectionSchemaNode) {
+                CollectionSchemaNode collectionSchemaNode = (CollectionSchemaNode)schemaNode;
+                schemaNode = (SchemaNode)collectionSchemaNode.getParentBean();
+            }
+            return new SchemaNode(schemaNode, name);
+        }
+    }
+
+    /**
+     * Default {@link CollectionSchemaNode} factory used when {@link MetaBuilder#define} is called.
+     */
+    protected static class DefaultCollectionSchemaNodeFactory extends AbstractFactory {
+        public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
+            return new CollectionSchemaNode((SchemaNode)builder.getCurrent(), name);
         }
     }
 }

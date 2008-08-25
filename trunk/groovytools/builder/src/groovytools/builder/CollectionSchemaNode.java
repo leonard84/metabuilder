@@ -7,12 +7,16 @@ import org.codehaus.groovy.runtime.*;
 import java.util.*;
 
 /**
+ * {@link SchemaNode} sub-class that handles certain collection behaviors.
+ *
+ * @author didge
+ * @version $REV$
  */
 public class CollectionSchemaNode extends SchemaNode implements Factory {
     /**
      * Holder for the actual parent object.
      */
-    protected Object parentBean;
+    private Object parentBean;
 
     public CollectionSchemaNode(SchemaNode parent, Object name) {
         super(parent, name);
@@ -52,6 +56,23 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         parentBean = parent;
     }
 
+    /**
+     * Returns the build-time parent of the collection.
+     *
+     * @return see above
+     */
+    public Object getParentBean() {
+        return parentBean;
+    }
+
+    /**
+     * Returns the key that may be used to add a child to the collection.
+     *
+     * @param keyAttr may be a property name or closure accepting the child as the only argument
+     * @param child the child
+     *
+     * @return see above
+     */
     protected Object getKey(Object keyAttr, Object child) {
         Object key = null;
         if(keyAttr instanceof Closure) {
@@ -60,6 +81,9 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         }
         else if(keyAttr instanceof String) {
             key = InvokerHelper.getProperty(child, (String)keyAttr);
+        }
+        else {
+            throw MetaBuilder.createCollectionException((String)name(), "key attribute type not supported");
         }
         return key;
     }
@@ -189,7 +213,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             }
         }
         catch(Exception e) {
-            throw new CollectionException((String)name(), e);
+            throw MetaBuilder.createCollectionException((String)name(), e);
         }
     }
 }

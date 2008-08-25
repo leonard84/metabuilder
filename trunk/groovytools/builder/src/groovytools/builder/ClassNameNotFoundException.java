@@ -2,6 +2,9 @@ package groovytools.builder;
 
 /**
  * Thrown when {@link MetaBuilder} can't resolve a class name.
+ * 
+ * @author didge
+ * @version $REV$
  */
 public class ClassNameNotFoundException extends MetaBuilderException {
     public ClassNameNotFoundException() {

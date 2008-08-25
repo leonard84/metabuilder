@@ -1,7 +1,10 @@
 import groovytools.builder.MetaBuilder
-import groovytools.builder.MetaBuilder2
 
 /**
+ * Tests alternative collection definitions.
+ *
+ * @author didge
+ * @version $REV$
  */
 class CollectionAttributesTest extends GroovyTestCase {
 
@@ -90,8 +93,8 @@ class CollectionAttributesTest extends GroovyTestCase {
             }
         }
 
-        assertEquals("List collection test", 6, parent1.listOfChildren.size())
-        assertEquals("Map collection test", 5, parent1.mapOfChildren.size())
+        assertEquals(6, parent1.listOfChildren.size())
+        assertEquals(5, parent1.mapOfChildren.size())
     }
 
     public static void main(String[] args) {

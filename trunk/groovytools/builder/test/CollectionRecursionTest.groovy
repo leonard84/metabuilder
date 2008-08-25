@@ -1,6 +1,10 @@
 import groovytools.builder.MetaBuilder
 
 /**
+ * Tests recursive shema definitions.
+ *
+ * @author didge
+ * @version $REV$
  */
 class CollectionRecursionTest extends GroovyTestCase {
 
@@ -40,7 +44,7 @@ class CollectionRecursionTest extends GroovyTestCase {
             }
         }
 
-        assertEquals("recursion", '1.2.1', parent.listOfChildren[0].listOfChildren[1].listOfChildren[0].name)
+        assertEquals('1.2.1', parent.listOfChildren[0].listOfChildren[1].listOfChildren[0].name)
     }
 
     public static void main(String[] args) {

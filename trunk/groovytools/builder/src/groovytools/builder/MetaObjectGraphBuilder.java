@@ -11,6 +11,7 @@ import java.util.*;
  * to the schemas given to it.  It is not intended to be used independently of {@link MetaBuilder}.
  *
  * @author didge
+ * @version $REV$
  */
 public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 
@@ -30,15 +31,21 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     private LinkedList schemaStack;
 
     /**
+     * Default factory to use when no other can be resolved.
+     */
+    private Factory defaultFactory;
+
+    /**
      * Constructs a {@link MetaObjectGraphBuilder}.
      *
      * @param metaBuilder the {@link MetaBuilder} providing the build context
      */
-    public MetaObjectGraphBuilder(MetaBuilder metaBuilder, Node defaultSchema) {
+    public MetaObjectGraphBuilder(MetaBuilder metaBuilder, Node defaultSchema, Factory defaultFactory) {
         super();
         this.metaBuilder = metaBuilder;
         schemaStack = new LinkedList();
         this.defaultSchema = defaultSchema;
+        this.defaultFactory = defaultFactory;
 
         setClassNameResolver(createClassNameResolver());
         setClassLoader(metaBuilder.getClassLoader());
@@ -75,7 +82,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 
     /**
      * Finds and returns a child schema with the given name, in the specified container or null if not found.  This
-     * method will also search any super-schemas specified with the 'extend' attribute.
+     * method will also search any super-schemas specified with the 'schema' attribute.
      *
      * @param parentSchema  the parent schema
      * @param containerName the name of a container of child schemas, e.g. collections, properties
@@ -87,86 +94,27 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         Node nodesSchema = schemaNodesList.size() > 0 ? (Node)schemaNodesList.get(0) : null;
         NodeList nodes = nodesSchema != null ? (NodeList)nodesSchema.get(name) : null;
         nodes = nodes != null && nodes.size() > 0 ? nodes : nodesSchema != null ? (NodeList)nodesSchema.get("%") : null;
-        Node childSchema = nodes != null && nodes.size() > 0 ? (Node)nodes.get(0) : (Node)parentSchema.attribute("schema");
+        Node childSchema = nodes != null && nodes.size() > 0 ? (Node)nodes.get(0) : null;
         if(childSchema == null) {
-            Object extendSchemaRef = parentSchema.attribute("extend");
+            Object extendSchemaRef = parentSchema.attribute("schema");
             Node extendSchema = resolveSchemaRef(extendSchemaRef);
             if(extendSchema != null) childSchema = findSchema(extendSchema, containerName, name);
         }
         return childSchema;
     }
 
-    /**
-     * Checks the current set of attributes against the set of properties defined in the current schema's 'properties' node, if any.
-     * <p/>
-     * Checking is done as follows:
-     * For each property, attempt to retrieve the corresponding attribute's value.
-     * <ol>
-     * <li>If the attribute has not been specified and a default value has been provided, set the value of the
-     * attribute to the default value.</li>
-     * <li>If the attribute has not been specified and no default value has been provided, and the property is required,
-     * throw a {@link PropertyException}</li>
-     * <li>If the attribute has been specified and a check provided, check the attribute's value.  If the check returns
-     * false, throw a {@link PropertyException}</li>
-     * </ol>
-     * Further, if the current schema does not include the special property '%' and any attribute is specified that not
-     * corresponding to a defined proeprty, then a {@link PropertyException} is thrown
-     *
-     * @param attributes
-     */
-    protected void checkAttributes(Map attributes) {
-        HashMap attCopy = new HashMap(attributes);
-
-        Node schema = getCurrentSchema();
-
-        NodeList nodeList = (NodeList)schema.get("properties");
-        // if there are no properties, skip right down to checking for unkown properties
-        boolean hasWildCard = ((NodeList)schema.get("%")).size() > 0;
-
-        while(nodeList != null) {
-            if(nodeList.size() > 0) {
-                SchemaNode propertySchema = (SchemaNode)nodeList.get(0);
-                hasWildCard = ((NodeList)propertySchema.get("%")).size() > 0;
-
-                List propertyList = propertySchema.children();
-                for(int i = 0; i < propertyList.size(); i++) {
-                    Node property = (Node)propertyList.get(i);
-                    String name = (String)property.name();
-                    Boolean req = (Boolean)property.attribute("req");
-                    boolean hasDef = property.attributes().containsKey("def");
-                    Object val = attCopy.remove(name);
-                    if(val == null && !hasDef && req != null && req.booleanValue()) {
-                        throw MetaBuilder.createPropertyException(name, "required property missing");
-                    }
-                    Closure check = (Closure)property.attribute("check");
-                    if(check != null) {
-                        Boolean b = (Boolean)check.call(val);
-                        if(b != null && !b.booleanValue()) {
-                            throw MetaBuilder.createPropertyException(name, "value invalid");
-                        }
-                    }
-                }
-            }
-            // check any 'super' schemas for additional properties
-            Node extend = (Node)schema.attribute("extend");
-            if(extend != null) {
-                schema = extend;
-                nodeList = (NodeList)extend.get("properties");
-            }
-            else {
-                nodeList = null;
-            }
+    protected Object findSchemaAttribute(Node parentSchema, String name) {
+        Object attribute = parentSchema.attribute(name);
+        if(attribute == null) {
+            Object extendedSchemaRef = parentSchema.attribute("schema");
+            Node extendedSchema = resolveSchemaRef(extendedSchemaRef);
+            if(extendedSchema != null) attribute = findSchemaAttribute(extendedSchema, name);
         }
-        if(!hasWildCard) {
-            for(Iterator leftovers = attCopy.keySet().iterator(); leftovers.hasNext();) {
-                String leftover = (String)leftovers.next();
-                throw MetaBuilder.createPropertyException(leftover, "property unkown");
-            }
-        }
+        return attribute;
     }
 
     /**
-     * Overrides the default implementation in order to construct nodes based on the current schema definition.
+     * Overrides in order to construct nodes based on the current schema definition.
      *
      * @param name       the name of the node
      * @param attributes optional attributes of the current node
@@ -174,15 +122,19 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @return a node
      */
     protected Object createNode(Object name, Map attributes, Object value) {
+        // MetaObjectGraphBuilder bascially works by matching name against a child of the current schema.
         Node currentSchema = getCurrentSchema();
         Node childSchema = null;
         if(currentSchema == null) {
+            // If there is no current schema, its because the builder is building the root node.
             currentSchema = (Node)metaBuilder.getSchema((String)name);
         }
         if(currentSchema == null) {
+            // If we can't find a schema using the root node's name, try using the default schema
             childSchema = defaultSchema;
         }
         else if(getCurrent() == null) {
+            // No current node exists, see if the  schema supports any name
             String rootName = (String)currentSchema.name();
             if(!rootName.equals(name) && !rootName.equals("%")) {
                 throw new IllegalArgumentException((String)name);
@@ -190,6 +142,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             childSchema = currentSchema;
         }
         else {
+            // We have a current schema
             Node propertySchema = findSchema(currentSchema, "properties", (String)name);
             // supports setting a property not as an attribute, but like propname(value)
             // todo - didge: req:true is checked in setNodeAttributes(), so any properties set this way can't be required proprerties (at least not yet)
@@ -285,7 +238,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     public class FactoryClassNameResolver implements ObjectGraphBuilder.ClassNameResolver {
         public String resolveClassname(String className) {
             Node schema = getCurrentSchema();
-            Object factory = schema.attribute("factory");
+            Object factory = findSchemaAttribute(schema, "factory");
             if(factory instanceof String)
                 return (String)factory;
             else if(factory instanceof Class) {
@@ -318,7 +271,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         if(schema instanceof Factory) {
             return (Factory)schema;
         }
-        Object factory = schema.attribute("factory");
+        Object factory = findSchemaAttribute(schema, "factory");
         if(factory != null && factory instanceof Factory) {
             return (Factory)factory;
         }
@@ -332,7 +285,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         if(factory instanceof String || factory instanceof Class) {
             return super.resolveFactory(name, attributes, value);
         }
-        return metaBuilder.getDefaultNodeFactory();
+        return defaultFactory;
         //throw MetaBuilder.createFactoryException((String)name, " unsupported factory");
     }
 
@@ -348,7 +301,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 
         // skip setting properties on Nodes because they
         // had their properties set already
-        if(node instanceof Node) return;
+        //if(node instanceof Node) return;
 
         HashMap attCopy = new HashMap(attributes);
 
@@ -386,10 +339,10 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 }
             }
             // check any 'super' schemas for additional properties
-            Node extend = (Node)schema.attribute("extend");
-            if(extend != null) {
-                schema = extend;
-                nodeList = (NodeList)extend.get("properties");
+            Node superSchema = (Node)schema.attribute("schema");
+            if(superSchema != null) {
+                schema = superSchema;
+                nodeList = (NodeList)superSchema.get("properties");
             }
             else {
                 nodeList = null;
@@ -402,7 +355,9 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             Object val = leftover.getValue();
             if(wildCardNode == null) {
                 wildCardNode = findSchema(schema, "properties", name);
-                if(wildCardNode == null) throw MetaBuilder.createPropertyException(name, "property unkown");
+                if(wildCardNode == null) {
+                    throw MetaBuilder.createPropertyException(name, "property unkown");
+                }
             }
             setProperty(node, val, name, wildCardNode);
         }
@@ -432,7 +387,14 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 throw MetaBuilder.createPropertyException(propertyName, "'property' attribute of schema does not specify a string or closure.");
             }
         }
-        InvokerHelper.setProperty(node, propertyName, value);
+        // todo - didge: Rethink special case for SchemaNodes.  An alternative would be to mess around with its MetaClass
+        if(node instanceof SchemaNode) {
+            SchemaNode schemaNode = (SchemaNode)node;
+            schemaNode.attributes().put(propertyName, value);
+        }
+        else {
+            InvokerHelper.setProperty(node, propertyName, value);
+        }
     }
 
     /**
