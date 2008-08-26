@@ -95,14 +95,14 @@ public class MetaBuilder extends GroovyObjectSupport {
      *                 }
      *                 '%'(shema: metaSchema)
      *             }
-     *             properties(factory: schemaNodeFactory) {
-     *                 '%'(schema: metaSchema)
-     *                     properties() {
-     *                         property()
-     *                         check()
-     *                         req()
-     *                         def()
-     *                     }
+     *         }
+     *         properties(factory: schemaNodeFactory) {
+     *             '%'(schema: metaSchema)
+     *                 properties() {
+     *                     property()
+     *                     check()
+     *                     req()
+     *                     def()
      *                 }
      *             }
      *         }
@@ -125,31 +125,32 @@ public class MetaBuilder extends GroovyObjectSupport {
         propertiesMetaSchema.attributes().put("factory", schemaNodeFactory);
         SchemaNode schemaNode = new SchemaNode(propertiesMetaSchema, "schema");
         SchemaNode factoryNode = new SchemaNode(propertiesMetaSchema, "factory");
-        SchemaNode propertyNode = new SchemaNode(propertiesMetaSchema, "property");
-        SchemaNode reqNode = new SchemaNode(propertiesMetaSchema, "req");
-        SchemaNode defNode = new SchemaNode(propertiesMetaSchema, "def");
-        SchemaNode checkNode = new SchemaNode(propertiesMetaSchema, "check");
 
-        SchemaNode colsMetaSchema = new SchemaNode(metaSchema, "collections");
-        SchemaNode colsSchema = new SchemaNode(colsMetaSchema, "collections");
+        SchemaNode colMetaSchema = new SchemaNode(metaSchema, "collections");
+        SchemaNode colsSchema = new SchemaNode(colMetaSchema, "collections");
         colsSchema.attributes().put("factory", schemaNodeFactory);
 
         SchemaNode colSchema = new SchemaNode(colsSchema, "%");  // allows the collection to have any name, e.g. foos
         colSchema.attributes().put("factory", collectionNodeFactory);
-
-        SchemaNode colPropertiesSchema = new SchemaNode(colSchema, "properties");
-        SchemaNode colNode = new SchemaNode(colPropertiesSchema, "collection");
-        SchemaNode addNode = new SchemaNode(colPropertiesSchema, "add");
-        SchemaNode keyNode = new SchemaNode(colPropertiesSchema, "key");
+        SchemaNode colSchemaProperties = new SchemaNode(colSchema, "properties");
+        SchemaNode colNode = new SchemaNode(colSchemaProperties, "collection");
+        SchemaNode addNode = new SchemaNode(colSchemaProperties, "add");
+        SchemaNode keyNode = new SchemaNode(colSchemaProperties, "key");
 
         SchemaNode colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name, e.g. foo
         colElementSchema.attributes().put("schema", metaSchema);
 
-        SchemaNode colsPropertiesSchema = new SchemaNode(colsMetaSchema, "properties");
-        colsPropertiesSchema.attributes().put("factory", schemaNodeFactory);
+        SchemaNode propertiesSchema = new SchemaNode(colMetaSchema, "properties");
+        propertiesSchema.attributes().put("factory", schemaNodeFactory);
 
-        SchemaNode childMetaSchema = new SchemaNode(colsPropertiesSchema, "%");
-        childMetaSchema.attributes().put("schema", metaSchema);
+        SchemaNode propertiesElementSchema = new SchemaNode(propertiesSchema, "%");
+        propertiesElementSchema.attributes().put("schema", metaSchema);
+
+        SchemaNode propertiesElementSchemaProperties = new SchemaNode(propertiesElementSchema, "properties");
+        SchemaNode propertyNode = new SchemaNode(propertiesElementSchemaProperties, "property");
+        SchemaNode reqNode = new SchemaNode(propertiesElementSchemaProperties, "req");
+        SchemaNode defNode = new SchemaNode(propertiesElementSchemaProperties, "def");
+        SchemaNode checkNode = new SchemaNode(propertiesElementSchemaProperties, "check");
 
         return metaSchema;
     }
