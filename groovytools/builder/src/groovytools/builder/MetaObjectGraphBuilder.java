@@ -122,7 +122,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @return a node
      */
     protected Object createNode(Object name, Map attributes, Object value) {
-        // MetaObjectGraphBuilder bascially works by matching name against a child of the current schema.
+        // MetaObjectGraphBuilder bascially works by matching name against a child node of the current schema.
         Node currentSchema = getCurrentSchema();
         Node childSchema = null;
         if(currentSchema == null) {
@@ -142,29 +142,12 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             childSchema = currentSchema;
         }
         else {
-            // We have a current schema
-            Node propertySchema = findSchema(currentSchema, "properties", (String)name);
-            // supports setting a property not as an attribute, but like propname(value)
-            // todo - didge: req:true is checked in setNodeAttributes(), so any properties set this way can't be required proprerties (at least not yet)
-            if(propertySchema != null) {
-                // simply set simple values, otherwise, build the property value like any other node
-                if(attributes == Collections.EMPTY_MAP && value != null) {
-                    Object node = getCurrent();
-                    setProperty(node, value, (String)name, propertySchema);
-                    return null;
-                }
-                else {
-                    childSchema = propertySchema;
-                }
-            }
             childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", (String)name);
             if(childSchema == null) {
                 NodeList nodeList = (NodeList)currentSchema.get((String)name);
                 if(nodeList.size() == 0) nodeList = (NodeList)currentSchema.get("%");
                 if(nodeList.size() > 0) {
                     childSchema = (Node)nodeList.get(0);
-                    Object schemaRef = childSchema.attribute("schema");
-                    if(schemaRef != null) childSchema = resolveSchemaRef(schemaRef);
                 }
             }
         }
@@ -294,19 +277,21 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      *
      * @param node
      * @param attributes
-     * @see #setProperty(Object, Object, String, Node)
+     * @see #setProperty(Object, Object, Object)
      */
     protected void setNodeAttributes(Object node, Map attributes) {
-        Node schema = getCurrentSchema();
+        // Not crazy about doing this, but need to keep super defaults from overwriting sub defaults...
+        HashMap propValues = new HashMap(); // map of all propValues to set
+        HashMap propSetters = new HashMap();  // map of all propSetters to set
+        ArrayList reqProps = new ArrayList();  // map of all propSetters to set
 
-        // skip setting properties on Nodes because they
-        // had their properties set already
-        //if(node instanceof Node) return;
+        Node schema = getCurrentSchema();
 
         HashMap attCopy = new HashMap(attributes);
 
         NodeList nodeList = (NodeList)schema.get("properties");
 
+        // iterate through this and all parent schemas' properties
         while(nodeList != null) {
             if(nodeList.size() > 0) {
                 SchemaNode propertySchema = (SchemaNode)nodeList.get(0);
@@ -315,31 +300,44 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 for(int i = 0; i < propertyList.size(); i++) {
                     Node property = (Node)propertyList.get(i);
                     String name = (String)property.name();
-                    Object def = property.attribute("def");
-                    if(attCopy.containsKey(name) || def != null) {
-                        Object val = attCopy.remove(name);
-                        if(val == null && def != null) {
-                            val = def;
-                        }
-                        Closure check = (Closure)property.attribute("check");
-                        if(check != null) {
-                            Boolean b = (Boolean)check.call(val);
-                            if(b != null && !b.booleanValue()) {
-                                throw MetaBuilder.createPropertyException(name, "value invalid");
+
+                    // Look for a value if one does not already exist
+                    if(propValues.containsKey(name) == false) {
+                        Object def = property.attribute("def");
+                        if(attCopy.containsKey(name) || def != null) {
+                            Object val = attCopy.remove(name);
+                            if(val == null && def != null) {
+                                val = def;
                             }
+                            propValues.put(name, val);
                         }
-                        setProperty(node, val, name, property);
                     }
-                    else {
-                        Boolean req = (Boolean)property.attribute("req");
-                        if(req != null && req.booleanValue()) {
-                            throw MetaBuilder.createPropertyException(name, "required property missing");
+
+                    // If req == true, add to a list of properties to check later.
+                    Boolean req = (Boolean)property.attribute("req");
+                    if(req != null && req.booleanValue()) {
+                        reqProps.add(name);
+                    }
+
+                    // Execute the check, if exists.
+                    Closure check = (Closure)property.attribute("check");
+                    if(check != null) {
+                        // Get the value from the map in case the value was set by a sub-property
+                        Object val = propValues.get(name);
+                        Boolean b = (Boolean)check.call(val);
+                        if(b != null && !b.booleanValue()) {
+                            throw MetaBuilder.createPropertyException(name, "value invalid");
                         }
+                    }
+                    // Retrieve the property setter object, if not already done.
+                    if(propSetters.containsKey(name) == false) {
+                        Object propAttr = property.attribute("property");
+                        propSetters.put(name, propAttr);
                     }
                 }
             }
-            // check any 'super' schemas for additional properties
-            Node superSchema = (Node)schema.attribute("schema");
+            // prepare to search any super schemas for additional properties
+            SchemaNode superSchema = (SchemaNode)resolveSchemaRef(schema.attribute("schema"));
             if(superSchema != null) {
                 schema = superSchema;
                 nodeList = (NodeList)superSchema.get("properties");
@@ -348,6 +346,8 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 nodeList = null;
             }
         }
+
+        // Look for undefined properties
         Node wildCardNode = null;
         for(Iterator leftovers = attCopy.entrySet().iterator(); leftovers.hasNext();) {
             Map.Entry leftover = (Map.Entry)leftovers.next();
@@ -359,7 +359,26 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                     throw MetaBuilder.createPropertyException(name, "property unkown");
                 }
             }
-            setProperty(node, val, name, wildCardNode);
+            propValues.put(name, val);
+        }
+
+        // Now that we have all properties set, check that all required properties are set
+        // Note: This is done last so that a sub schema with a req property doesn't fail when the super has a def.
+        for(int i = 0; i < reqProps.size(); i++) {
+            String name = (String)reqProps.get(i);
+            if(propValues.containsKey(name) == false) {
+                throw MetaBuilder.createPropertyException(name, "property required");
+            }
+        }
+
+        // Finally... set the properties
+        for(Iterator iterator = propValues.entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry = (Map.Entry)iterator.next();
+            Object propName = entry.getKey();
+            Object value = entry.getValue();
+            Object propSetter = propSetters.get(propName);
+            propSetter = propSetter == null ? propName : propSetter;
+            setProperty(node, value, propSetter);
         }
     }
 
@@ -369,23 +388,20 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      *
      * @param node           the current node
      * @param value          the value of the property
-     * @param propertyName   the name of the property as it appears in the script
-     * @param propertySchema the property's schema
+     * @param propertyAttr       the property's property attribute or name
      */
-    protected void setProperty(Object node, Object value, String propertyName, Node propertySchema) {
-        Object propertyAttr = propertySchema.attribute("property");
-        if(propertyAttr != null) {
-            if(propertyAttr instanceof Closure) {
-                Closure propertyClosure = (Closure)propertyAttr;
-                propertyClosure.call(new Object[]{node, value});
-                return;
-            }
-            else if(propertyAttr instanceof String) {
-                propertyName = (String)propertyAttr;
-            }
-            else {
-                throw MetaBuilder.createPropertyException(propertyName, "'property' attribute of schema does not specify a string or closure.");
-            }
+    protected void setProperty(Object node, Object value, Object propertyAttr) {
+        String propertyName = null;
+        if(propertyAttr instanceof Closure) {
+            Closure propertyClosure = (Closure)propertyAttr;
+            propertyClosure.call(new Object[]{node, value});
+            return;
+        }
+        else if(propertyAttr instanceof String) {
+            propertyName = (String)propertyAttr;
+        }
+        else {
+            throw MetaBuilder.createPropertyException(propertyName, "'property' attribute of schema does not specify a string or closure.");
         }
         // todo - didge: Rethink special case for SchemaNodes.  An alternative would be to mess around with its MetaClass
         if(node instanceof SchemaNode) {
