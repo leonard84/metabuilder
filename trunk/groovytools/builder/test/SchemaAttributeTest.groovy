@@ -41,9 +41,9 @@ class SchemaAttributeTest extends GroovyTestCase {
         }
 
         assertTrue(obj instanceof TestParent)
-        assertEquals(obj.name, 'extended')
+        assertEquals('extended', obj.name)
         assertTrue(obj.listOfChildren[0] instanceof TestParent)
-        assertEquals(obj.listOfChildren[0].name, 'extended')
+        assertEquals('extended', obj.listOfChildren[0].name)
     }
 
     public static void main(String[] args) {

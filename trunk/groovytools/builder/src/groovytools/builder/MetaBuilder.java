@@ -2,21 +2,252 @@ package groovytools.builder;
 
 import groovy.lang.*;
 import groovy.util.*;
+import org.codehaus.groovy.runtime.*;
 
 import java.util.*;
 
 /**
- * {@link MetaBuilder} is a builder that uses metadata you specify in order to more conveniently and correctly
+ * <code>MetaBuilder</code> is a builder that uses schemas to more conveniently and correctly
  * build object hierarchies.
+ * <h2>Usage</h2>
+ * <code>MetaBuilder</code> is easy to use.  Just follow these steps:
+ * <ol>
+ * <li>Create a <code>MetaBuilder</code> instance.</li>
+ * <li>Define your schemas with {@link #define}.</li>
+ * <li>Build your objects with {@link #build}.</li>
+ * </ol>
+ * <h2>Example</h2>
+ * Here is a very simple example demonstrating the steps above:
+ * <pre>
+ * // Create a MetaBuilder
+ * MetaBuilder mb = new MetaBuilder()
+ *
+ * // Define a schema
+ * mb.define {
+ *    invoice {
+ *         collections {
+ *             items {
+ *                 item {
+ *                     properties {
+ *                         qty(req: true)
+ *                     }
+ *                 }
+ *             }
+ *             payments {
+ *                 payment {
+ *                     properties {
+ *                         amt(req: true)
+ *                     }
+ *                 }
+ *             }
+ *         }
+ *     }
+ * }
+ *
+ * // Build an object.
+ * mb.build {
+ *     invoice {
+ *         items {
+ *             item(qty: 1)
+ *             item(qty: 20)
+ *         }
+ *         payments {
+ *             payment(amt: 100.00)
+ *         }
+ *     }
+ * }
+ * </pre>
+ * <h2>The MetaBuilder Meta-Schema</h2>
+ * The schemas that may be defined are governed by the following meta-schema.  Note, <code>'%'</code> is used to stand
+ * for any sequence of non-whitespace characters:
+ * <pre>
+ * def schemaNodeFactory = new MetaBuilder.SchemaNodeFactory()
+ * def collectionSchemaNodeFactory = new MetaBuilder.CollectionSchemaNodeFactory()
+ *
+ * def metaSchema = '%'(factory: schemaNodeFactory) {
+ *     properties() {
+ *         schema()
+ *         factory()
+ *     }
+ *     collections() {
+ *         collections(factory: schemaNodeFactory) {
+ *             '%'(factory: collectionSchemaNodeFactory) {
+ *                 properties(factory: schemaNodeFactory) {
+ *                     collection()
+ *                     key()
+ *                     add()
+ *                 }
+ *                 '%'(shema: metaSchema)
+ *             }
+ *         }
+ *         properties(factory: schemaNodeFactory) {
+ *             '%'(schema: metaSchema)
+ *                 properties() {
+ *                     property()
+ *                     check()
+ *                     req()
+ *                     def()
+ *                     // Inherited from metaSchema:
+ *                     // schema()
+ *                     // factory()
+ *                 }
+ *             }
+ *         }
+ *     }
+ * }
+ * </pre>
+ * <h2>Property Values</h2>
+ * The following table describes the allowable property values when defining your own schema using <code>MetaBuilder</code>'s
+ * default meta-schema. Values may be of type: literal, object, {@link Class} and/or {@link Closure}.
+ * <p/>
+ * Only one value may be specied for each property at a time.
+ * <table border="1" cellspacing="0">
+ * <tr>
+ *  <td>Name</td>
+ *  <td>Description</td>
+ *  <td>Literal</td>
+ *  <td>Object</td>
+ *  <td>Class</td>
+ *  <td>Closure</td>
+ * </tr>
+ * <tr>
+ *  <td><code>schema</code></td>
+ *  <td>Allows a schema to inherit and extend the properties and collections of another schema.</td>
+ *  <td>The name of another schema.  Optional.  The named schema does not have to be previously defined.</td>
+ *  <td>A previously defined schema object.</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ * </tr>
+ * <tr>
+ *  <td><code>factory</code></td>
+ *  <td>Specifies the factory to use for building nodes.  Optional.  The default factory builds {@link SchemaNode}s.</td>
+ *  <td>A fully qualified class name for direct instatiation with {@link Class#newInstance} .</td>
+ *  <td>A {@link groovy.util.Factory} object.</td>
+ *  <td>A {@link Class} for direct instatiation with {@link Class#newInstance}.</td>
+ *  <td>A {@link Closure} returning an object of the form
+ *   <ul>
+ *    <li><code>{ -> ...}</code></li>
+ *    <li><code>{n -> ...}</code></li>
+ *    <li><code>{n, v -> ...}</code></li>
+ *    <li><code>{n, v, a -> ...}</code></li>
+ *   </ul>
+ *   where
+ *   <ul>
+ *    <li><code>n</code> is the name of the node</li>
+ *    <li><code>v</code> is the value of the node (may be null)</li>
+ *    <li><code>a</code> is a map of the node's attributes (may be empty)</li>
+ *   <ul>
+ *  </td>
+ * </tr>
+ * <tr>
+ *  <td>collection</td>
+ *  <td>Used to identify or access the actual collection name.  Optional.  The default is to access the collection using the node's name.</td>
+ *  <td>A property or field name</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>A {@link Closure} returning the collection of the form
+ *   <ul>
+ *    <li><code>{o -> ...}</code></li>
+ *   </li>
+ *   where
+ *   <ul>
+ *    <li><code>o</code> is the owner of the collection</li>
+ *   <ul>
+ *  </td>
+ * </tr>
+ * <tr>
+ *  <td><code>key</code></td>
+ *  <td>When collection is a {@link Map}, key must be defined to return the key to be used to add an object to children to the collection unless add is also specified with two arguments.</td>
+ *  <td>A property or field name</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td><code>{c -> ...}</code><br/>
+ *   where
+ *   <ul>
+ *    <li><code>c</code> is the child</li>
+ *   <ul>
+ *  </td>
+ * </tr>
+ * <tr>
+ *  <td><code>add</code></td>
+ *  <td>Used to specify an alternative for adding children to the collection.  Optional.  Useful when a modifiable collection is not accessible.</td>
+ *  <td>A method name.  The method must accept two {@link Object} argument values for the key and value, in that order.</code></td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>A {@link Closure} of the form
+ *   <ul>
+ *    <li><code>{p, k, c -> ...}</code></li>
+ *    <li><code>{p, c -> ...}</code></li>
+ *   </ul>
+ *   where
+ *   <ul>
+ *    <li><code>p</code> is the parent</li>
+ *    <li><code>k</code> is the key</li>
+ *    <li><code>c</code> is the child</li>
+ *   </ul>
+ *  Note, if the first {@link Closure} form is used, then the property <code>key</code> must be specfied.  By using the
+ *  second form, the {@link Closure} is responsible for determining and using the correct key for the child.
+ *  </td>
+ * </tr>
+ * <tr>
+ *  <td><code>property</code></td>
+ *  <td>Used to identify or modify the actual property.  Optional.  The default is to set the property using the node's name.  Note that this value may be inherited or overridden.</td>
+ *  <td>A property or field name.</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>A {@link Closure} of the form
+ *   <ul>
+ *     <li><code>{o, v -> ...}</code></li>
+ *   </li>
+ *   where
+ *   <ul>
+ *    <li><code>o</code> is the object</li>
+ *    <li><code>v</code> is the value</li>
+ *   <ul>
+ *  </td>
+ * </tr>
+ * <tr>
+ *  <td><code>check</code></td>
+ *  <td>Used to specify a check on the value of the property.  Optional.  Note that when inherited and overridden, all checks in the hierarchy are applied.</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>A {@link Closure} returning a Groovy Truth value of the form
+ *   <ul>
+ *    <li><code>{v -> ...}</code></li>
+ *   </ul>
+ *   where
+ *   <ul>
+ *    <li><code>v</code> is the value</li>
+ *   <ul>
+ *  </td>
+ * </tr>
+ * <tr>
+ *  <td><code>req</code></td>
+ *  <td>Used to specify if a property must be specified.  Optional.  Note that this value may be inherited but not overridden.</td>
+ *  <td>n/a</td>
+ *  <td><code>true</code> or <code>false</code></td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ * </tr>
+ * <tr>
+ *  <td><code>def</code></td>
+ *  <td>Used to specify a default value.  Optional.  Note that this value may be inherited or overridden.</td>
+ *  <td>Any literal value may be passed to the property.</td>
+ *  <td>Any object may be passed to the property.</td>
+ *  <td>Any {@link Class} is passed like an object.</td>
+ *  <td>Any {@link Closure} is passed like an object.</td>
+ * </tr>
+ * </table>
  *
  * @see ObjectGraphBuilder
  *
  * @author didge
  * @version $REV$
  */
-public class MetaBuilder extends GroovyObjectSupport {
+public class MetaBuilder extends Binding {
     private Map schemas;
-    private Node defaultSchema;
+    private Node defaultMetaSchema;
     private ClassLoader classLoader;
     private Factory defaultBuildNodeFactory;
     private Factory defaultDefineNodeFactory;
@@ -29,7 +260,7 @@ public class MetaBuilder extends GroovyObjectSupport {
     public MetaBuilder() {
         this(null, null);
         this.classLoader = getClass().getClassLoader();
-        this.defaultSchema = createDefaultMetaSchema();
+        this.defaultMetaSchema = createDefaultMetaSchema();
     }
 
     /**
@@ -40,17 +271,17 @@ public class MetaBuilder extends GroovyObjectSupport {
      */
     public MetaBuilder(ClassLoader classLoader) {
         this(null, classLoader);
-        this.defaultSchema = createDefaultMetaSchema();
+        this.defaultMetaSchema = createDefaultMetaSchema();
     }
 
     /**
      * Constructs a MetaBuilder with the given default meta schema
      *
-     * @param defaultSchema the default schema
+     * @param defaultMetaSchema the default schema
      */
-    public MetaBuilder(Node defaultSchema, ClassLoader classLoader) {
+    public MetaBuilder(Node defaultMetaSchema, ClassLoader classLoader) {
         schemas = new HashMap();
-        this.defaultSchema = defaultSchema;
+        this.defaultMetaSchema = defaultMetaSchema;
         this.defaultBuildNodeFactory = createDefaultBuildNodeFactory();
         this.defaultDefineNodeFactory = createDefaultDefineNodeFactory();
         this.classLoader = classLoader;
@@ -76,39 +307,6 @@ public class MetaBuilder extends GroovyObjectSupport {
 
     /**
      * The default implementantion returns the MetaBuilder meta schema:
-     * <pre>
-     * schemaNodeFactory = new MetaBuilder.SchemaNodeFactory()
-     * collectionSchemaNodeFactory = new MetaBuilder.CollectionSchemaNodeFactory()
-     * <p/>
-     * def metaSchema = '%'(factory: schemaNodeFactory) {
-     *     properties() {
-     *         schema()
-     *         factory()
-     *     }
-     *     collections() {
-     *         collections(factory: schemaNodeFactory) {
-     *             '%'(factory: collectionSchemaNodeFactory) {
-     *                 properties(factory: schemaNodeFactory) {
-     *                     collection()
-     *                     add()
-     *                     key()
-     *                 }
-     *                 '%'(shema: metaSchema)
-     *             }
-     *         }
-     *         properties(factory: schemaNodeFactory) {
-     *             '%'(schema: metaSchema)
-     *                 properties() {
-     *                     property()
-     *                     check()
-     *                     req()
-     *                     def()
-     *                 }
-     *             }
-     *         }
-     *     }
-     * }
-     *  </pre>
      * Subclasses may override this method to implement their own default meta schemas as needed.
      *
      * @return see above
@@ -160,14 +358,42 @@ public class MetaBuilder extends GroovyObjectSupport {
      * use in building new objects on the MetaBuilder directly.
      *
      * @param c
-     * @return
+     *
+     * @return see above
      */
     public Object define(Closure c) {
-        c.setDelegate(createMetaObjectGraphBuilder(getDefaultSchema(), defaultDefineNodeFactory));
+        c.setDelegate(createMetaObjectGraphBuilder(defaultMetaSchema, defaultDefineNodeFactory));
         c.setResolveStrategy(Closure.DELEGATE_FIRST);
         Object schema = c.call();
         return schema;
 
+    }
+
+    public Object define(Class viewClass) {
+        if (Script.class.isAssignableFrom(viewClass)) {
+            Script script = InvokerHelper.createScript(viewClass, this);
+            return define(script);
+        } else {
+            throw new RuntimeException("Only scripts can be executed via build(Class)");
+        }
+    }
+
+    public Object define(Script script) {
+        synchronized (script) {
+            MetaClass scriptMetaClass = script.getMetaClass();
+            try {
+                MetaObjectGraphBuilder metaObjectGraphBuilder = createMetaObjectGraphBuilder(defaultMetaSchema, defaultDefineNodeFactory);
+                script.setMetaClass(new FactoryInterceptorMetaClass(scriptMetaClass, metaObjectGraphBuilder));
+                script.setBinding(this);
+                return script.run();
+            } finally {
+                script.setMetaClass(scriptMetaClass);
+            }
+        }
+    }
+
+    public Object define(final String script, GroovyClassLoader loader) {
+        return define(loader.parseClass(script));
     }
 
     public Object build(Closure c) {
@@ -177,10 +403,38 @@ public class MetaBuilder extends GroovyObjectSupport {
         return schema;
     }
 
+    public Object build(Class viewClass) {
+        if (Script.class.isAssignableFrom(viewClass)) {
+            Script script = InvokerHelper.createScript(viewClass, this);
+            return build(script);
+        } else {
+            throw new RuntimeException("Only scripts can be executed via build(Class)");
+        }
+    }
+
+    public Object build(Script script) {
+        synchronized (script) {
+            MetaClass scriptMetaClass = script.getMetaClass();
+            try {
+                MetaObjectGraphBuilder metaObjectGraphBuilder = createMetaObjectGraphBuilder(null, defaultBuildNodeFactory);
+                script.setMetaClass(new FactoryInterceptorMetaClass(scriptMetaClass, metaObjectGraphBuilder));
+                script.setBinding(this);
+                return script.run();
+            } finally {
+                script.setMetaClass(scriptMetaClass);
+            }
+        }
+    }
+
+    public Object build(final String script, GroovyClassLoader loader) {
+        return build(loader.parseClass(script));
+    }
+
     /**
      * Returns a previously defined schema with the given name.
      *
      * @param name see above
+     *
      * @return see above
      */
     public Object getSchema(String name) {
@@ -191,6 +445,8 @@ public class MetaBuilder extends GroovyObjectSupport {
      * Adds a previously defined schema with the given name.
      *
      * @param name see above
+     * @param schema
+     *
      * @return see above
      */
     public Object addSchema(String name, Object schema) {
@@ -211,8 +467,8 @@ public class MetaBuilder extends GroovyObjectSupport {
      *
      * @return see above
      */
-    public Node getDefaultSchema() {
-        return defaultSchema;
+    public Node getDefaultMetaSchema() {
+        return defaultMetaSchema;
     }
 
     /**
@@ -220,6 +476,7 @@ public class MetaBuilder extends GroovyObjectSupport {
      *
      * @param defaultSchema
      * @param defaultNodeFactory
+     *
      * @return see above
      */
     protected MetaObjectGraphBuilder createMetaObjectGraphBuilder(Node defaultSchema, Factory defaultNodeFactory) {
@@ -287,13 +544,11 @@ public class MetaBuilder extends GroovyObjectSupport {
     }
 
     /**
-     * Default {@link SchemaNode} factory used when {@link MetaBuilder#build} is called.  Differs from 
+     * Default {@link SchemaNode} factory used when {@link MetaBuilder#build} is called.  Differs from
      * {@link DefaultDefineSchemaNodeFactory} in that it doesn't include {@link CollectionSchemaNode}s in the result.
      */
     protected static class DefaultBuildSchemaNodeFactory extends AbstractFactory {
         public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-            if(attributes == null) attributes = new HashMap();
-            if(value == null) value = new NodeList();
             SchemaNode schemaNode = (SchemaNode)builder.getCurrent();
             if(schemaNode instanceof CollectionSchemaNode) {
                 CollectionSchemaNode collectionSchemaNode = (CollectionSchemaNode)schemaNode;
@@ -311,4 +566,58 @@ public class MetaBuilder extends GroovyObjectSupport {
             return new CollectionSchemaNode((SchemaNode)builder.getCurrent(), name);
         }
     }
-}
+
+    /**
+     * Supports builder scripts by dispatching methods against {@link MetaObjectGraphBuilder}.
+     * <p>
+     * Borrowed from {@link FactoryBuilderSupport}.  Is there a reason it wasn't made a public class to begin with?
+     */
+    public static class FactoryInterceptorMetaClass extends DelegatingMetaClass {
+
+        FactoryBuilderSupport factory;
+
+        public FactoryInterceptorMetaClass(MetaClass delegate, FactoryBuilderSupport factory) {
+            super(delegate);
+            this.factory = factory;
+        }
+
+        public Object invokeMethod(Object object, String methodName, Object arguments) {
+            try {
+                return delegate.invokeMethod(object, methodName, arguments);
+            } catch (MissingMethodException mme) {
+                // attempt factory resolution
+                try {
+                    if (factory.getMetaClass().respondsTo(factory, methodName).isEmpty()) {
+                        // dispatch to fectories if it is not a literal method
+                        return factory.invokeMethod(methodName, arguments);
+                    } else {
+                        return InvokerHelper.invokeMethod(factory, methodName, arguments);
+                    }
+                } catch (MissingMethodException mme2) {
+                    // throw original
+                    // should we chain in mme2 somehow?
+                    throw mme;
+                }
+            }
+        }
+
+        public Object invokeMethod(Object object, String methodName, Object[] arguments) {
+            try {
+                return delegate.invokeMethod(object, methodName, arguments);
+            } catch (MissingMethodException mme) {
+                // attempt factory resolution
+                try {
+                    if (factory.getMetaClass().respondsTo(factory, methodName).isEmpty()) {
+                        // dispatch to fectories if it is not a literal method
+                        return factory.invokeMethod(methodName, arguments);
+                    } else {
+                        return InvokerHelper.invokeMethod(factory, methodName, arguments);
+                    }
+                } catch (MissingMethodException mme2) {
+                    // throw original
+                    // should we chain in mme2 somehow?
+                    throw mme;
+                }
+            }
+        }
+    }}

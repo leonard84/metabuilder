@@ -27,13 +27,15 @@ public class ClosureFactoryAdapter extends AbstractFactory {
     }
 
     /**
-     * Invocations of this method are delegated to the {@link Closure} for handling.
+     * Invocations of this method are delegated to the {@link Closure} to return an object when called.
      *
      * @param builder
      * @param name
      * @param value
      * @param attributes
-     * @return
+     *
+     * @return see above
+     *
      * @throws InstantiationException
      * @throws IllegalAccessException
      */

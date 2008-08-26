@@ -3,6 +3,7 @@ package groovytools.builder;
 import groovy.lang.*;
 import groovy.util.*;
 import org.codehaus.groovy.runtime.*;
+import org.codehaus.groovy.runtime.typehandling.*;
 
 import java.util.*;
 
@@ -39,6 +40,8 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * Constructs a {@link MetaObjectGraphBuilder}.
      *
      * @param metaBuilder the {@link MetaBuilder} providing the build context
+     * @param defaultSchema
+     * @param defaultFactory
      */
     public MetaObjectGraphBuilder(MetaBuilder metaBuilder, Node defaultSchema, Factory defaultFactory) {
         super();
@@ -192,7 +195,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     }
 
     /**
-     * Override to modify the {@link IdentifierResolver} behavior.
+     * Override to modify the {@link groovy.util.ObjectGraphBuilder.IdentifierResolver} behavior.
      *
      * @return see above
      */
@@ -215,7 +218,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     }
 
     /**
-     * Overrides the default implementation in {@link ObjectGraphBuilder.ClassNameResolver} in order to support
+     * Overrides the default implementation in {@link ClassNameResolver} in order to support
      * resolution of the class name using the <code>factory</code> schema attribute.
      */
     public class FactoryClassNameResolver implements ObjectGraphBuilder.ClassNameResolver {
@@ -247,7 +250,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @param name
      * @param attributes
      * @param value
-     * @return
+     * @return see above
      */
     protected Factory resolveFactory(Object name, Map attributes, Object value) {
         Node schema = getCurrentSchema();
@@ -277,6 +280,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      *
      * @param node
      * @param attributes
+     *
      * @see #setProperty(Object, Object, Object)
      */
     protected void setNodeAttributes(Object node, Map attributes) {
@@ -324,8 +328,9 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                     if(check != null) {
                         // Get the value from the map in case the value was set by a sub-property
                         Object val = propValues.get(name);
-                        Boolean b = (Boolean)check.call(val);
-                        if(b != null && !b.booleanValue()) {
+                        Object b = check.call(val);
+
+                        if(DefaultTypeTransformation.booleanUnbox(b)) {
                             throw MetaBuilder.createPropertyException(name, "value invalid");
                         }
                     }
