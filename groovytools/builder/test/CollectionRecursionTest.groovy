@@ -23,8 +23,6 @@ class CollectionRecursionTest extends GroovyTestCase {
             }
         }
 
-        println parentDef
-
         def parent = mb.build {
             parent (name: '1') {
                 listOfChildren {
