@@ -25,7 +25,7 @@ class CollectionAttributesTest extends GroovyTestCase {
                     listOfChildren { // simple example of a collection of child objects
                         child(schema: 'child')
                     }
-                    listOfChildren2(collection: 'listOfChildren') { // uses the collection above
+                    listOfChildren2(collection: "listOfChildren") { // uses the collection above
                         child(schema: 'child')
                     }
                     listOfChildren3(collection: {p -> p.getListOfChildren() }) {
@@ -58,8 +58,6 @@ class CollectionAttributesTest extends GroovyTestCase {
                 }
             }
         }
-
-        println parentDef
 
         def parent1 = mb.build {
             parent (name: 'Lists of Children', listOfChildrenAsProperty: ['Jeb', 'Job']) {

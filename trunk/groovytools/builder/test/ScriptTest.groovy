@@ -13,7 +13,6 @@ class ScriptTest extends GroovyTestCase {
 
         mb.define(defineScript)
         def obj = mb.build(buildScript)
-        println(obj)
     }
 
     public static void main(String[] args) {
