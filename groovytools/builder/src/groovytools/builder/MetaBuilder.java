@@ -1,3 +1,18 @@
+/*
+ *         Copyright 2008 Dave 'didge' Masser-Frye
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package groovytools.builder;
 
 import groovy.lang.*;
@@ -63,19 +78,24 @@ import java.util.*;
  * <pre>
  * def schemaNodeFactory = new MetaBuilder.SchemaNodeFactory()
  * def collectionSchemaNodeFactory = new MetaBuilder.CollectionSchemaNodeFactory()
+ * def nullOrBoolean = { v -> v == null || v instanceof Boolean }
+ * def nullOrClosure = { v -> v == null || v instanceof Closure }
+ * def nullOrStringOrClosure = { v -> v == null || v instanceof String || v instanceof Closure }
+ * def nullOrStringOrClassOrFactoryOrClosure = { v -> v == null || v instanceof String || v instanceof Class || v instanceof Factory || v instanceof Closure }
+ * def nullOrStringOrSchemaNode = { v -> v == null || v instanceof String || v instanceof SchemaNode }
  *
  * def metaSchema = '%'(factory: schemaNodeFactory) {
  *     properties() {
- *         schema()
- *         factory()
+ *         schema(check: nullOrStringOrSchemaNode )
+ *         factory(check: nullOrStringOrClassOrFactoryOrClosure )
  *     }
  *     collections() {
  *         collections(factory: schemaNodeFactory) {
  *             '%'(factory: collectionSchemaNodeFactory) {
  *                 properties(factory: schemaNodeFactory) {
- *                     collection()
- *                     key()
- *                     add()
+ *                     collection(check: nullOrStringOrClosure )
+ *                     key(check: nullOrStringOrClosure )
+ *                     add(check: nullOrStringOrClosure )
  *                 }
  *                 '%'(shema: metaSchema)
  *             }
@@ -83,9 +103,9 @@ import java.util.*;
  *         properties(factory: schemaNodeFactory) {
  *             '%'(schema: metaSchema)
  *                 properties() {
- *                     property()
- *                     check()
- *                     req()
+ *                     property(check: nullOrStringOrClosure)
+ *                     check(check: nullOrClosure)
+ *                     req(check: nullOrBoolean)
  *                     def()
  *                     // Inherited from metaSchema:
  *                     // schema()
@@ -315,6 +335,35 @@ public class MetaBuilder extends Binding {
 
         Factory schemaNodeFactory = new DefaultDefineSchemaNodeFactory();
         Factory collectionNodeFactory = new DefaultCollectionSchemaNodeFactory();
+        Closure nullOrBoolean = new Closure(this) {
+            public Object call(Object v) {
+                return v == null || v instanceof Boolean;
+            }
+        };
+
+        Closure nullOrClosure = new Closure(this) {
+            public Object call(Object v) {
+                return v == null || v instanceof Closure;
+            }
+        };
+
+        Closure nullOrStringOrClosure = new Closure(this) {
+            public Object call(Object v) {
+                return v == null || v instanceof String || v instanceof Closure;
+            }
+        };
+
+        Closure nullOrStringOrClassOrFactoryOrClosure = new Closure(this) {
+            public Object call(Object v) {
+                return v == null || v instanceof String ||v instanceof Class ||  v instanceof Factory || v instanceof Closure;
+            }
+        };
+
+        Closure nullOrStringOrSchemaNode = new Closure(this) {
+            public Object call(Object v) {
+                return v == null || v instanceof String || v instanceof SchemaNode;
+            }
+        };
 
         SchemaNode metaSchema = new SchemaNode(null, "%");
         metaSchema.attributes().put("factory", schemaNodeFactory);
@@ -322,7 +371,9 @@ public class MetaBuilder extends Binding {
         SchemaNode propertiesMetaSchema = new SchemaNode(metaSchema, "properties");
         propertiesMetaSchema.attributes().put("factory", schemaNodeFactory);
         SchemaNode schemaNode = new SchemaNode(propertiesMetaSchema, "schema");
+        schemaNode.attributes().put("check", nullOrStringOrSchemaNode);
         SchemaNode factoryNode = new SchemaNode(propertiesMetaSchema, "factory");
+        factoryNode.attributes().put("check", nullOrStringOrClassOrFactoryOrClosure);
 
         SchemaNode colMetaSchema = new SchemaNode(metaSchema, "collections");
         SchemaNode colsSchema = new SchemaNode(colMetaSchema, "collections");
@@ -332,8 +383,11 @@ public class MetaBuilder extends Binding {
         colSchema.attributes().put("factory", collectionNodeFactory);
         SchemaNode colSchemaProperties = new SchemaNode(colSchema, "properties");
         SchemaNode colNode = new SchemaNode(colSchemaProperties, "collection");
+        colNode.attributes().put("check", nullOrStringOrClosure);
         SchemaNode addNode = new SchemaNode(colSchemaProperties, "add");
+        addNode.attributes().put("check", nullOrStringOrClosure);
         SchemaNode keyNode = new SchemaNode(colSchemaProperties, "key");
+        keyNode.attributes().put("check", nullOrStringOrClosure);
 
         SchemaNode colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name, e.g. foo
         colElementSchema.attributes().put("schema", metaSchema);
@@ -346,9 +400,12 @@ public class MetaBuilder extends Binding {
 
         SchemaNode propertiesElementSchemaProperties = new SchemaNode(propertiesElementSchema, "properties");
         SchemaNode propertyNode = new SchemaNode(propertiesElementSchemaProperties, "property");
+        propertyNode.attributes().put("check", nullOrStringOrClosure);
         SchemaNode reqNode = new SchemaNode(propertiesElementSchemaProperties, "req");
+        reqNode.attributes().put("check", nullOrBoolean);
         SchemaNode defNode = new SchemaNode(propertiesElementSchemaProperties, "def");
         SchemaNode checkNode = new SchemaNode(propertiesElementSchemaProperties, "check");
+        checkNode.attributes().put("check", nullOrClosure);
 
         return metaSchema;
     }
@@ -552,9 +609,10 @@ public class MetaBuilder extends Binding {
             SchemaNode schemaNode = (SchemaNode)builder.getCurrent();
             if(schemaNode instanceof CollectionSchemaNode) {
                 CollectionSchemaNode collectionSchemaNode = (CollectionSchemaNode)schemaNode;
-                schemaNode = (SchemaNode)collectionSchemaNode.getParentBean();
+                SchemaNode parent = (SchemaNode)collectionSchemaNode.getParentBean();
+//                new SchemaNode(parent, name);
             }
-            return new SchemaNode(schemaNode, name);
+            return new SchemaNode(null, name);
         }
     }
 

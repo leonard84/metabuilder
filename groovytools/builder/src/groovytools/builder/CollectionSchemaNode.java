@@ -1,3 +1,18 @@
+/*
+ *         Copyright 2008 Dave 'didge' Masser-Frye
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package groovytools.builder;
 
 import groovy.lang.*;
@@ -54,6 +69,13 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
 
     public void setParent(FactoryBuilderSupport builder, Object parent, Object child) {
         parentBean = parent;
+        if(parentBean instanceof SchemaNode) {
+            String name = (String)attribute("collection");
+            if(name == null) {
+                name = (String)name();
+            }
+            new SchemaNode((SchemaNode)parentBean, name);
+        }
     }
 
     /**
@@ -83,7 +105,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             key = InvokerHelper.getProperty(child, (String)keyAttr);
         }
         else {
-            throw MetaBuilder.createCollectionException((String)name(), "key attribute type not supported");
+            throw MetaBuilder.createCollectionException((String)name(), "schema's key value is not a supported type");
         }
         return key;
     }
@@ -161,6 +183,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         Object keyAttr = attribute("key");
 
         try {
+            // If there is an add attribute, use it
             if(addAttr != null) {
                 if(addAttr instanceof Closure) {
                     Closure addClosure = (Closure)addAttr;
@@ -181,6 +204,9 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                         InvokerHelper.invokeMethod(parentBean, (String)addAttr, child);
                     }
                 }
+                else {
+                    throw MetaBuilder.createCollectionException((String)name(), "schema's add value is not a String or Closure");
+                }
             }
             else {
                 Object collectionAttr = attribute("collection");
@@ -195,7 +221,21 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                     property = collectionClosure.call(parentBean);
                 }
                 else if(collectionAttr instanceof String) {
+                    // Special handling when both parent and child are SchemaNodes.
+                    // Can't use an 'add' Closure since that would affect non-SchemaNode types, by default.
+                    // Place here so that any 'add' or 'collection' Closures specified have the first chance
+                    // to override this behavior.
+                    if(parentBean instanceof SchemaNode && child instanceof SchemaNode) {
+                        SchemaNode parentNode = (SchemaNode)parentBean;
+                        NodeList nodeList = (NodeList)parentNode.get((String)collectionAttr);
+                        SchemaNode collectionNode = (SchemaNode)nodeList.get(0);
+                        collectionNode.append((Node)child);
+                        return;
+                    }
                     property = InvokerHelper.getProperty(parentBean, (String)collectionAttr);
+                }
+                else {
+                    throw MetaBuilder.createCollectionException((String)name(), "schema's collection value is not a String or Closure");
                 }
 
                 if(property != null) {
