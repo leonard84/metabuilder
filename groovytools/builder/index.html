@@ -1,0 +1,178 @@
+<!--
+  ~      Copyright 2008 the original author or authors
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+    <title>MetaBuilder - index</title>
+    <meta name="author" content="didge">
+</head>
+<body>
+<h1>MetaBuilder</h1>
+<h2>What is it?</h2>
+<p>
+    <b>MetaBuilder</b> extends Groovy's <tt>ObjectGraphBuilder</tt> to include a metadata builder, which then may be
+    used to control the object graph that is built.
+</p>
+<h4>A Quick Example</h4>
+<p>
+    To give you a quick idea of what can be done with <b>MetaBuilder</b> take a look at the following Groovy
+    script and see if you can find the typo:
+</p>
+  <pre>
+        def nb = new NodeBuilder()
+
+        def anInvoice = nb.invoice(date: new Date()) {
+            items {
+                item(upc: 123, qty: 1, price: 14.99)
+                item(upe: 234, qty: 4, price: 14.99)
+                item(upc: 345, qty: 6, price: 14.99)
+            }
+        }</pre>
+<p>
+    The typo in the second item would normally go undetected until possibly much later when something tries to process
+    these nodes. <b>MetaBuilder</b> can catch this kind of error and do much more.  But first you have to define a schema:
+</p>
+<pre>
+        import groovytools.builder.*
+
+        def mb = new MetaBuilder()
+        def invoiceSchema =  mb.define {
+            invoice {
+                <strong><em>properties</em></strong> {
+                    date()
+                }
+                <strong><em>collections</em></strong> {
+                    items {
+                        item {
+                            <strong><em>properties</em></strong> {
+                                upc()
+                                price()
+                                qty()
+                            }
+                        }
+                    }
+                }
+            }
+        } </pre>
+<p>
+    <b>MetaBuilder</b> schema is easy to understand.  Properties of an object are defined within a node called
+    <tt>properties</tt>.  Collections and maps are defined within a node called <tt>collections</tt>.
+</p>
+<p>
+    Ok, now that you have a schema, you use it almost exactly as before.  I've highlighted the differences:
+</p>
+<pre>
+        def anInvoice = <strong><em>mb.build</em></strong> {
+            invoice(date: new Date()) {
+                items {
+                    item(upc: 123, qty: 1, price: 14.99)
+                    item(upe: 234, qty: 4, price: 14.99)
+                    item(upc: 345, qty: 6, price: 14.99)
+                }
+            }
+        } </pre>
+<p>
+    Of course, I left the typo in there so that we could see what <b>MetaBuilder</b> reports:
+</p>
+<pre>
+    <strong><tt>groovytools.builder.PropertyException: Property 'upe': property unkown</tt></strong> </pre>
+<p>
+    Now you get immediate feedback when there are errors in the build script.
+</p>
+<p>
+    <b>MetaBuilder</b> doesn't just create trees of <tt>Node</tt>s, however.  In fact, it's very easy to tell <b>MetaBuilder</b> to construct
+    a very specific graph of objects by specifying the classes to use in the schema.  For the next example, assume you have
+    the following classes:
+</p>
+<pre>
+    class Invoice {
+        def date
+        def items = []
+    }
+
+    class Item {
+        def upc
+        def qty
+        def price
+    } </pre>
+<p>
+    Here is what you would do to the previous schema to have <b>MetaBuilder</b> now construct an <tt>Invoice</tt> as
+    above:
+</p>
+<pre>
+        import groovytools.builder.*
+
+        def mb = new MetaBuilder()
+        def invoiceSchema =  mb.define {
+            invoice <strong><em>(factory: Invoice)</em></strong> {
+                properties {
+                    date()
+                }
+                collections {
+                    items {
+                        item <strong><em>(factory: Item)</em></strong> {
+                            properties {
+                                upc()
+                                price()
+                                qty()
+                            }
+                        }
+                    }
+                }
+            }
+        } </pre>
+<p>
+    The previous builder doesn't even have to change!
+</p>
+<h2>More Examples</h2>
+<ul>
+</ul>
+<h2>Download and Installation</h2>
+<ul>
+    <li>
+        Get the latest and greatest release of <b>MetaBuilder</b> from <a href="http://sourceforge.net/projects/groovytools">http://sourceforge.net/projects/groovytools</a>.
+    </li>
+    <li>
+        Simply include <b>lib/groovytools-builder-X.X.X.jar</b> in your classpath.
+    </li>
+</ul>
+<h2>Documentation and Examples</h2>
+<ul>
+    <li><b><a href="example/InvoiceExample.groovy">InvoiceExample.groovy</a></b> is a more extensive version of the above demonstrating
+        most of <b>MetaBuilder</b>'s features</li>
+    <li><b><a href="exmaple/ComponentModelExample.groovy">ComponentModelExample.groovy</a></b> is another example involving a UI component model.</li>
+    <li>A more detailed manual is forthcoming.</li>
+</ul>
+<h2>Getting Help</h2>
+<ul>
+    <li>Please use the online <a href="http://sourceforge.net/forum/forum.php?forum_id=746505">groovytools help forum</a> for assistance.
+    </li>
+</ul>
+<h2>Licensing</h2>
+<ul>
+    <li>
+        This software is licensed under <b>Apache License, version 2.0</b>, the terms of which you may find <a href="LICENSE.txt" type="text/plain">here</a>.
+    </li>
+</ul>
+<h2>References</h2>
+<ul>
+    <li><a href="http://groovy.codehaus.org">http://groovy.codehaus.org</a></li>
+</ul>
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=69524&amp;type=5" width="210"
+                                      height="62" border="0" alt="SourceForge Logo"></a>
+</body>
+</html>
