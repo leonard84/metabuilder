@@ -27,13 +27,26 @@
 <h1>MetaBuilder</h1>
 <h2>What is it?</h2>
 <p>
-    <b>MetaBuilder</b> extends Groovy's <tt>ObjectGraphBuilder</tt> to include a metadata builder, which then may be
-    used to control the object graph that is built.
+    <b>MetaBuilder</b> is a builder that builds builders.  
+</p>
+<p>
+    If you aren't already familiar with the concept of
+    builders, or with builders in Groovy, start with Groovy's
+    online <a href="http://groovy.codehaus.org/Builders">Builder
+    </a> description or even better, see the top-rated Groovy book, <a
+    href="http://www.manning.com/koenig/">Groovy in Action</a>, Chapter 8,
+    Working with Builders.
+</p>
+<p>
+    If you are already familiar with the concept of builders, then a
+    quick example is probably the best way to give you a feel for what
+    MetaBuilder can do.
 </p>
 <h4>A Quick Example</h4>
 <p>
-    To give you a quick idea of what can be done with <b>MetaBuilder</b> take a look at the following Groovy
-    script and see if you can find the typo:
+    To give you a quick idea of what can be done with <b>MetaBuilder</b>
+    take a look at the following Groovy script and see if you can find
+    the typo:
 </p>
   <pre>
         def nb = new NodeBuilder()
@@ -46,8 +59,10 @@
             }
         }</pre>
 <p>
-    The typo in the second item would normally go undetected until possibly much later when something tries to process
-    these nodes. <b>MetaBuilder</b> can catch this kind of error and do much more.  But first you have to define a schema:
+    The typo in the second item would normally go undetected until
+    possibly much later when something tries to process these
+    nodes. <b>MetaBuilder</b> can catch this kind of error and do
+    much more.  But first you have to define a schema:
 </p>
 <pre>
         import groovytools.builder.*
@@ -55,13 +70,13 @@
         def mb = new MetaBuilder()
         def invoiceSchema =  mb.define {
             invoice {
-                <strong><em>properties</em></strong> {
+                <strong>properties</strong> {
                     date()
                 }
-                <strong><em>collections</em></strong> {
+                <strong>collections</strong> {
                     items {
                         item {
-                            <strong><em>properties</em></strong> {
+                            <strong>properties</strong> {
                                 upc()
                                 price()
                                 qty()
@@ -72,14 +87,16 @@
             }
         } </pre>
 <p>
-    <b>MetaBuilder</b> schema is easy to understand.  Properties of an object are defined within a node called
-    <tt>properties</tt>.  Collections and maps are defined within a node called <tt>collections</tt>.
+    <b>MetaBuilder</b> schema is easy to understand.
+    Properties of an object are defined within a node called
+    <strong>properties</strong>.  Collections and maps are
+    defined within a node called <strong>collections</strong>.
 </p>
 <p>
     Ok, now that you have a schema, you use it almost exactly as before.  I've highlighted the differences:
 </p>
 <pre>
-        def anInvoice = <strong><em>mb.build</em></strong> {
+        def anInvoice = <strong>mb.build</strong> {
             invoice(date: new Date()) {
                 items {
                     item(upc: 123, qty: 1, price: 14.99)
@@ -92,12 +109,12 @@
     Of course, I left the typo in there so that we could see what <b>MetaBuilder</b> reports:
 </p>
 <pre>
-    <strong><tt>groovytools.builder.PropertyException: Property 'upe': property unkown</tt></strong> </pre>
+    <strong>groovytools.builder.PropertyException: Property 'upe': property unkown</strong> </pre>
 <p>
     Now you get immediate feedback when there are errors in the build script.
 </p>
 <p>
-    <b>MetaBuilder</b> doesn't just create trees of <tt>Node</tt>s, however.  In fact, it's very easy to tell <b>MetaBuilder</b> to construct
+    <b>MetaBuilder</b> doesn't just create trees of Nodes, however.  In fact, it's very easy to tell <b>MetaBuilder</b> to construct
     a very specific graph of objects by specifying the classes to use in the schema.  For the next example, assume you have
     the following classes:
 </p>
@@ -113,7 +130,7 @@
         def price
     } </pre>
 <p>
-    Here is what you would do to the previous schema to have <b>MetaBuilder</b> now construct an <tt>Invoice</tt> as
+    Here is what you would do to the previous schema to have <b>MetaBuilder</b> now construct an Invoice as
     above:
 </p>
 <pre>
@@ -121,13 +138,13 @@
 
         def mb = new MetaBuilder()
         def invoiceSchema =  mb.define {
-            invoice <strong><em>(factory: Invoice)</em></strong> {
+            invoice <strong>(factory: Invoice)</strong> {
                 properties {
                     date()
                 }
                 collections {
                     items {
-                        item <strong><em>(factory: Item)</em></strong> {
+                        item <strong>(factory: Item)</strong> {
                             properties {
                                 upc()
                                 price()
@@ -139,14 +156,26 @@
             }
         } </pre>
 <p>
-    The previous builder doesn't even have to change!
+    Now, without any other changes, executing the build script just as before but with the new schema returns an Invoice!
 </p>
+<pre>
+        def anInvoice = <strong>mb.build</strong> {
+            invoice(date: new Date()) {
+                items {
+                    item(upc: 123, qty: 1, price: 14.99)
+                    item(upe: 234, qty: 4, price: 14.99)
+                    item(upc: 345, qty: 6, price: 14.99)
+                }
+            }
+        }
+        assert(anInvoice instanceof Invoice)</pre>
 <h2>Documentation and Examples</h2>
 <ul>
     <li><b><a href="example/InvoiceExample.groovy" type="text/plain">InvoiceExample.groovy</a></b> is a more extensive version of the above demonstrating
         most of <b>MetaBuilder</b>'s features</li>
     <li><b><a href="example/ComponentModelExample.groovy" type="text/plain">ComponentModelExample.groovy</a></b> is another example involving a UI component model.</li>
-    <li>A more detailed manual is forthcoming.</li>
+    <li><a href="http://groovytools.sourceforge.net/builder/doc/api/">JavaDoc API</a>.</li>
+    <li>The <a href="http://groovytools.sourceforge.net/builder/doc/api/groovytools/builder/MetaBuilder.html#metaschema">MetaBuilder Meta-Schema</a>.</li>
 </ul>
 <h2>Download and Installation</h2>
 <ul>

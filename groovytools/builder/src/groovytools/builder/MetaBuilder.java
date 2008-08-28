@@ -72,6 +72,7 @@ import java.util.*;
  *     }
  * }
  * </pre>
+ * <a name="metaschema"/>
  * <h2>The MetaBuilder Meta-Schema</h2>
  * The schemas that may be defined are governed by the following meta-schema.  Note, <code>'%'</code> is used to stand
  * for any sequence of non-whitespace characters:
