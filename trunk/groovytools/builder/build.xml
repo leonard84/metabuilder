@@ -193,20 +193,23 @@
         <input message="scp password for ${env.USER}@shell.sourceforge.net:" addproperty="scp.password"/>
         <scp
             knownhosts="${env.HOME}/.ssh/known_hosts"
-            todir="${env.USER}:${scp.password}@shell.sourceforge.net:/home/groovytools/htdocs"
+            todir="${env.USER}:${scp.password}@shell.sourceforge.net:~/groovytools/htdocs/builder"
         >
             <fileset dir=".">
                 <include name="NOTICE.txt"/>
                 <include name="LICENSE.txt"/>
                 <include name="index.html"/>
+                <include name="CHANGES.txt"/>
             </fileset>
 
             <fileset dir="doc">
-                <include name="CHANGES"/>
-                <include name="LICENSE"/>
                 <include name="*.html"/>
                 <include name="api/**/*.html"/>
                 <include name="api/**/*.css"/>
+            </fileset>
+            <fileset dir="example">
+                <include name="InvoiceExample.groovy"/>
+                <include name="ComponentModelExample.groovy"/>
             </fileset>
         </scp>
     </target>
