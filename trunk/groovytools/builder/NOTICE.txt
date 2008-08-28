@@ -1,0 +1,7 @@
+NOTICE file corresponding to the Apache License, Version 2.0, section 4 d.
+
+MetaBuilder
+Copyright 2008 The respective authors 
+
+MetaBuilder's authors are:
+Dave 'didge' Masser-Frye, didge@groovytools.net
