@@ -207,6 +207,7 @@
 		<ant inheritAll="false" dir="${release.name}" target="clean" />
 
 		<delete dir="${release.name}/build"/>
+		<delete dir="${release.name}/doc/api"/>
 		<zip destfile="${release.name}.zip" basedir="${release.name}"/>
 		<tar destfile="${release.name}.tar" basedir="${release.name}"/>
 		<gzip zipfile="${release.name}.tar.gz" src="${release.name}.tar"/>
@@ -214,18 +215,45 @@
 	</target>
 
     <target name="publish-doc" depends="properties">
+        <delete dir="${release.name}/doc/api"/>
+        <mkdir dir="${release.name}/doc/api"/>
+        <javadoc        
+            sourcepath="${release.name}/src" 
+            packagenames="groovytools.builder.*"
+            destdir="${release.name}/doc/api"         
+            author="true"
+            private="false"
+            version="true"
+            use="true"
+            windowtitle="${javadoc.fullname} API ${version}"
+            doctitle="${javadoc.fullname} API ${version}"
+            bottom="Copyright &amp;#169; ${copyright.year} FoundryLogic, LLC. All Rights Reserved."
+        >
+            <classpath>
+                <fileset dir="${release.name}">
+                    <include name="lib/*.jar"/>
+                </fileset>
+            </classpath>
+
+            <link
+                href="http://groovy.codehaus.org/gapi"
+                packagelistLoc="doc/groovy"
+                offline="true"
+                resolveLink="true"/>
+            <link href="http://java.sun.com/javase/6/docs/api" resolveLink="true"/>
+        </javadoc>
 		<exec executable="rsync">
 			<arg value="-avP"/>
 			<arg value="-e"/>
 			<arg value="ssh"/>
-			<arg value="index.html"/>
-			<arg value="LICENSE.txt"/>
-			<arg value="NOTICE.txt"/>
-			<arg value="CHANGES.txt"/>
-			<arg value="index.html"/>
-			<arg value="doc/api/"/>
-			<arg value="example/InvoiceExample.groovy"/>
-			<arg value="example/ComponentModelExample.groovy"/>
+			<arg value="${release.name}/index.html"/>
+			<arg value="${release.name}/LICENSE.txt"/>
+			<arg value="${release.name}/NOTICE.txt"/>
+			<arg value="${release.name}/CHANGES.txt"/>
+			<arg value="${release.name}/index.html"/>
+			<arg value="${release.name}/doc/api/"/>
+			<arg value="${release.name}/example/InvoiceExample.groovy"/>
+			<arg value="${release.name}/example/ComponentModelExample.groovy"/>
 			<arg value="${env.USER}@shell.sourceforge.net:~/groovytools/htdocs/builder"/>
 
 		</exec>

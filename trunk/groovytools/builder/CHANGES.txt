@@ -1,0 +1,9 @@
+1.0.1
+-----
+    * Updated to support Groovy 1.6-beta2.
+    * Added missing LICENSE.txt, NOTICE.txt, and README.txt files.
+    * Updated build.xml publish-doc and publish-release targets to use rsync.
+
+1.O.0
+-----
+    * Initial release.
