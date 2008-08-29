@@ -2,7 +2,7 @@
 	<property environment="env"/>
 
 	<property name="name" value="groovytools-builder" />
-	<property name="version" value="1.0.0" />
+	<property name="version" value="1.0.1" />
 
 	<path id="build.classpath">
 		<pathelement path="src"/>
@@ -11,6 +11,7 @@
 
 		<fileset dir="lib">
 			<include name="*.jar"/>
+			<exclude name="groovy-all-1.6*.jar"/>
 			<exclude name="${name}*.jar" />
 		</fileset>
 
@@ -23,6 +24,7 @@
 
 		<fileset dir="lib">
 			<include name="*.jar"/>
+			<exclude name="groovy-all-1.6*.jar"/>
 		</fileset>
 
 	</path>
