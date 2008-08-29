@@ -27,7 +27,7 @@ import java.util.*;
  * to the schemas given to it.  It is not intended to be used independently of {@link MetaBuilder}.
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 

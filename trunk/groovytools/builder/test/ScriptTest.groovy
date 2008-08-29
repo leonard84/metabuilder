@@ -1,6 +1,10 @@
 import groovytools.builder.MetaBuilder
 
 /**
+ * Tests loading external definitions and build scripts.
+ *
+ * @author didge
+ * @version $Id$
  */
 class ScriptTest extends GroovyTestCase {
     public void test1() {

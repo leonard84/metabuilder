@@ -19,7 +19,7 @@ package groovytools.builder;
  * Thrown when {@link MetaBuilder} doesn't recognize an object as an allowable factory.
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class FactoryException extends MetaBuilderException {
     public FactoryException() {

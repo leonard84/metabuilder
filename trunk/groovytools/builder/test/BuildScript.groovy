@@ -1,5 +1,6 @@
 /**
  * invoice build for ScriptTest
+ * $Id$
  */
 invoice {
     items {

@@ -7,11 +7,12 @@ import org.custommonkey.xmlunit.Diff
 import groovytools.builder.SchemaNode
 
 /**
- * This test demonstrates the use of   {@link MetaBuilder}  's default node factories.  The objects built are constructed
- * using   {@link SchemaNode}  s, which may be used in with utilities such as   {@link XmlNodePrinter}   that normally expect
- * {@link Node}  s.
+ * This test demonstrates the use of {@link MetaBuilder}'s default node factories.  The objects built are constructed
+ * using {@link SchemaNode}s, which may be used in with utilities such as {@link XmlNodePrinter} that normally expect
+ * {@link Node}s.
  *
  * @author didge
+ * @version $Id$
  */
 class StreamingMarkupBuilderTest extends GroovyTestCase {
     public void test1() {

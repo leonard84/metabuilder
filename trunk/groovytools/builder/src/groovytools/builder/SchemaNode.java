@@ -23,7 +23,7 @@ import java.util.*;
  * {@link SchemaNode} simply extends {@link Node} with some extra functionality to support cyclical graphs
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class SchemaNode extends Node{
 

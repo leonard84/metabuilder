@@ -25,7 +25,7 @@ import java.util.*;
  * {@link SchemaNode} sub-class that handles certain collection behaviors.
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class CollectionSchemaNode extends SchemaNode implements Factory {
     /**

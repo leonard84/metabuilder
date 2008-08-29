@@ -19,7 +19,7 @@ package groovytools.builder;
  * Thrown when an exception occurs building a collection or adding to a collection. 
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class CollectionException extends MetaBuilderException {
     public CollectionException() {

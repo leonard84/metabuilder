@@ -5,6 +5,7 @@ import groovytools.builder.MetaBuilder
  * manner.
  *
  * @author didge
+ * @version $Id$
  */
 
 MetaBuilder mb = new MetaBuilder()

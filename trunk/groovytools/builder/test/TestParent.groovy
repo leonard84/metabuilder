@@ -1,4 +1,8 @@
 /**
+ * Simple bean for testing.
+ * 
+ * @author didge
+ * @version $Id$
  */
 public class TestParent {
     def name
