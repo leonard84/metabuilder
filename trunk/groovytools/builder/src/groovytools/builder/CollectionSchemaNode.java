@@ -256,4 +256,15 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             throw MetaBuilder.createCollectionException((String)name(), e);
         }
     }
+
+    public boolean isHandlesNodeChildren() {
+        return false;
+    }
+
+    public void onFactoryRegistration(FactoryBuilderSupport builder, String registerdName, String registeredGroupName) {
+    }
+
+    public boolean onNodeChildren(FactoryBuilderSupport builder, Object node, Closure childContent) {
+        return false;
+    }
 }

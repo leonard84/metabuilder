@@ -268,6 +268,11 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @return see above
      */
     protected Factory resolveFactory(Object name, Map attributes, Object value) {
+        // Need to have this implementation act first before super,
+        // but FactoryBuilderSupport.resolveFactory() sets the CHILD_BUILDER context
+        // So it must be done directly here.  Not using CHILD_BUILDER for Groovy 1.5 compatibility.
+        getContext().put("_CHILD_BUILDER_"/* CHILD_BUILDER */, this);
+
         Node schema = getCurrentSchema();
         if(schema instanceof Factory) {
             return (Factory)schema;
