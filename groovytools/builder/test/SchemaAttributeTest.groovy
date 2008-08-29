@@ -2,6 +2,9 @@ import groovytools.builder.MetaBuilder
 
 /**
  * Tests the schema attribute.
+ *
+ * @author didge
+ * @version $Id$
  */
 class SchemaAttributeTest extends GroovyTestCase {
     public void test1() {

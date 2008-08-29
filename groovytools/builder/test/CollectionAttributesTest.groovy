@@ -4,7 +4,7 @@ import groovytools.builder.MetaBuilder
  * Tests alternative collection definitions.
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 class CollectionAttributesTest extends GroovyTestCase {
 

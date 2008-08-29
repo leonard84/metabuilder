@@ -4,7 +4,7 @@ import groovytools.builder.MetaBuilder
  * Tests recursive shema definitions.
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 class CollectionRecursionTest extends GroovyTestCase {
 

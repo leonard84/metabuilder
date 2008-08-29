@@ -1,4 +1,26 @@
-<project name="groovytools-builder" default="debug build" basedir=".">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Ant build script for GroovyTools Builder Project.
+
+       Copyright 2008 the original author or authors
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+     http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ 
+  Author : didge
+  $ID$
+-->
+
+<project name="groovytools-builder" default="build-g" basedir=".">
 	<property environment="env"/>
 
 	<property name="name" value="groovytools-builder" />
@@ -192,48 +214,33 @@
 	</target>
 
     <target name="publish-doc" depends="properties">
-        <input message="scp password for ${env.USER}@shell.sourceforge.net:" addproperty="scp.password"/>
-        <scp
-            knownhosts="${env.HOME}/.ssh/known_hosts"
-            todir="${env.USER}:${scp.password}@shell.sourceforge.net:~/groovytools/htdocs/builder"
-        >
-            <fileset dir=".">
-                <include name="NOTICE.txt"/>
-                <include name="LICENSE.txt"/>
-                <include name="index.html"/>
-                <include name="CHANGES.txt"/>
-            </fileset>
+		<exec executable="rsync">
+			<arg value="-avP"/>
+			<arg value="-e"/>
+			<arg value="ssh"/>
+			<arg value="index.html"/>
+			<arg value="LICENSE.txt"/>
+			<arg value="NOTICE.txt"/>
+			<arg value="CHANGES.txt"/>
+			<arg value="index.html"/>
+			<arg value="doc/api/"/>
+			<arg value="example/InvoiceExample.groovy"/>
+			<arg value="example/ComponentModelExample.groovy"/>
+			<arg value="${env.USER}@shell.sourceforge.net:~/groovytools/htdocs/builder"/>
 
-            <fileset dir="doc">
-                <include name="*.html"/>
-                <include name="api/**/*.html"/>
-                <include name="api/**/*.css"/>
-            </fileset>
-            <fileset dir="example">
-                <include name="InvoiceExample.groovy"/>
-                <include name="ComponentModelExample.groovy"/>
-            </fileset>
-        </scp>
+		</exec>
     </target>
 
     <target name="publish-release" depends="properties">
-        <input
-            message="ftp password for anonymous@upload.sourceforge.net:"
-            addproperty="ftp.password"/>
+		<exec executable="rsync">
+			<arg value="-avP"/>
+			<arg value="-e"/>
+			<arg value="ssh"/>
+			<arg value="${release.name}.zip"/>
+			<arg value="${release.name}.tar.gz"/>
+			<arg value="${env.USER}@frs.sourceforge.net:uploads/"/>
 
-        <ftp
-            server="upload.sourceforge.net"
-            userid="anonymous"
-            password="${ftp.password}"
-            remotedir="incoming"
-            binary="true"
-        >
-            <fileset dir=".">
-                <include name="${release.name}.zip"/>
-                <include name="${release.name}.tar.gz"/>
-            </fileset>
-        </ftp>
-
+		</exec>
     </target>
 
 </project>

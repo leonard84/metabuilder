@@ -32,7 +32,7 @@ import java.util.*;
  * </ol>
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class ClosureFactoryAdapter extends AbstractFactory {
     protected Closure closure;

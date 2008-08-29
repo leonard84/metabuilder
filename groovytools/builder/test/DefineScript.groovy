@@ -1,5 +1,8 @@
 /**
  * invoice schema for ScriptTest
+ *
+ * @author didge
+ * @version $Id$
  */
 invoice {
     collections {

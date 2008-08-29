@@ -264,7 +264,7 @@ import java.util.*;
  * @see ObjectGraphBuilder
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class MetaBuilder extends Binding {
     private Map schemas;

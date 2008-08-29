@@ -19,7 +19,7 @@ package groovytools.builder;
  * Thrown when a schema could not be found.
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class SchemaNotFoundException extends MetaBuilderException {
     public SchemaNotFoundException() {

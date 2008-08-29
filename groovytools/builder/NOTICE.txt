@@ -4,4 +4,4 @@ MetaBuilder
 Copyright 2008 The respective authors 
 
 MetaBuilder's authors are:
-Dave 'didge' Masser-Frye, didge@groovytools.net
+Dave 'didge' Masser-Frye, didge@foundrylogic.com

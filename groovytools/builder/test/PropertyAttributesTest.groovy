@@ -1,6 +1,10 @@
 import groovytools.builder.MetaBuilder
 
 /**
+ * Tests various attributes of properties.
+ *
+ * @author didge
+ * @version $Id$
  */
 class PropertyAttributesTest extends GroovyTestCase {
 

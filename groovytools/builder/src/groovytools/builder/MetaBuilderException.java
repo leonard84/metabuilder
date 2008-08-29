@@ -19,7 +19,7 @@ package groovytools.builder;
  * Base class for all {@link MetaBuilder} exceptions.
  *
  * @author didge
- * @version $REV$
+ * @version $Id$
  */
 public class MetaBuilderException extends RuntimeException {
     public MetaBuilderException() {

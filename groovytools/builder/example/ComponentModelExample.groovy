@@ -1,3 +1,9 @@
+/**
+ * A example demonstrating defining and building a non-trivial component model.
+ *
+ * @author didge
+ * @version $Id$
+ */
 import groovytools.builder.*;
 
 MetaBuilder mb = new MetaBuilder(classLoader: getClass().classLoader)
@@ -32,12 +38,9 @@ def componentSchema = mb.define {
         }
     }
 }
-println componentSchema
-
 def aComponent = mb.build {
     component(name: 'aComponent', x: 1, y: 2, w: 1, h: 1)
 }
-println aComponent
 
 def labelSchema = mb.define {
     label(schema: componentSchema, factory: Label) {
@@ -78,5 +81,3 @@ def aContainer = mb.build {
         }
     }
 }
-
-println aContainer
