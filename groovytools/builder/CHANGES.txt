@@ -3,13 +3,13 @@
 * Fixed how extended properties were resolved. 
 * Created a better scheme for processing def and req properties.
 * Added support for min and max properties on collections and properties.
-* Added ability to specify property value with =.
+* Added ability to specify property values with = (like ConfigSlurper).
 * Added ability to specify def value as a closure.
 * Added MetaConfigBuilder, which adds support for ConfigSlurper-like scripts.
 * Fixed issue with default factory assignments in subclasses of MetaBuilder.
 * Added ClassGeneratingMetaBuilder example.
 * Added new URL method versions of build() and define() to MetaBuilder.
-* Added Pattern as a supported type for check properties.
+* Added Pattern as a supported type for check properties.  
 
 1.0.1
 -----
