@@ -8,15 +8,9 @@ import groovytools.builder.MetaBuilder
  */
 class ScriptTest extends GroovyTestCase {
     public void test1() {
-        ClassLoader classLoader = getClass().classLoader
-        GroovyScriptEngine gse = new GroovyScriptEngine('test', classLoader)
-        Class defineScript = gse.loadScriptByName('DefineScript')
-        Class buildScript = gse.loadScriptByName('BuildScript')
-
-        MetaBuilder mb = new MetaBuilder(classLoader)
-
-        mb.define(defineScript)
-        def obj = mb.build(buildScript)
+        MetaBuilder mb = new MetaBuilder()
+        mb.define(new File('test/DefineScript.groovy').toURL())
+        def obj = mb.build(new File('test/BuildScript.groovy').toURL())
     }
 
     public static void main(String[] args) {

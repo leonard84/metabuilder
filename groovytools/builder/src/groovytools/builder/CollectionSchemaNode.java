@@ -65,6 +65,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
     }
 
     public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
+        checkSize(parent);
     }
 
     public void setParent(FactoryBuilderSupport builder, Object parent, Object child) {
@@ -91,11 +92,10 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
      * Returns the key that may be used to add a child to the collection.
      *
      * @param keyAttr may be a property name or closure accepting the child as the only argument
-     * @param child the child
-     *
+     * @param child   the child
      * @return see above
      */
-    protected Object getKey(Object keyAttr, Object child) {
+    protected Object key(Object keyAttr, Object child) {
         Object key = null;
         if(keyAttr instanceof Closure) {
             Closure keyClosure = (Closure)keyAttr;
@@ -112,7 +112,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
 
     /**
      * Sets the <code>child</code> on the <code>parent</code>.
-     * <p>
+     * <p/>
      * By default, reflection is used to find collection on the <code>parent</code> using the
      * name of the schema.  For example, if the schema's name is <code>foos</code> then this method will attempt to access
      * the collection using the method, <code>foos()</code>.  The access method of the collection may be overridden with the
@@ -120,21 +120,21 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
      * as a property of the <code>parent</code> using the <code>collection</code> value as the property's name.  However, if the
      * <code>collection</code> attribute value is a {@link Closure} where the first argument is the <code>parent</code>,
      * then the closure will be used to access the collection.
-     * <p>
+     * <p/>
      * When the collection object is not accessible or updateable, the <code>add</code> attribute must be used to specify the name of an
      * alternate method accepting a single argument (the <code>child</code>) or a {@link Closure} accepting two arguments (the <code>parent</code> and the <code>child</code>).
-     * <p>
+     * <p/>
      * For example, if <code>foos()</code> is not available or does not return an updateable collection, then 'add' maybe set to either
      * <code>addFoo</code> or <code>{&nbsp;p,&nbsp;c&nbsp;->&nbsp;p.addFoo(c)&nbsp;}</code>.
-     * <p>
+     * <p/>
      * When using the <code>attribute</code> the <code>collection</code> attribute is ignored since it is superflous.
-     * <p>
+     * <p/>
      * In either case, if the collection is a {@link Map}, then the <code>key</code> attribute must be specified in order
      * to retrieve the <code>child</code>'s key.  The <code>key</code> may either specify a property name or a {@link Closure} accepting one argument (the <code>child</code>).
-     * <p>
+     * <p/>
      * The value returned by calling <code>key</code> on the <code>child</code>, if it exists, is to put the
      * <code>child</code> into the <code>parent</code>'s collection.
-     * <p>
+     * <p/>
      * The following shows the different ways in which to use the attributes described above:
      * <pre>
      * parent {
@@ -174,6 +174,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
      *      }
      * }
      * </pre>
+     *
      * @param builder
      * @param parent
      * @param child
@@ -188,7 +189,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                 if(addAttr instanceof Closure) {
                     Closure addClosure = (Closure)addAttr;
                     if(keyAttr != null) {
-                        Object key = getKey(keyAttr, child);
+                        Object key = key(keyAttr, child);
                         addClosure.call(new Object[]{parentBean, key, child});
                     }
                     else {
@@ -197,7 +198,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                 }
                 else if(addAttr instanceof String) {
                     if(keyAttr != null) {
-                        Object key = getKey(keyAttr, child);
+                        Object key = key(keyAttr, child);
                         InvokerHelper.invokeMethod(parentBean, (String)addAttr, new Object[]{key, child});
                     }
                     else {
@@ -243,7 +244,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                         ((Collection)property).add(child);
                     }
                     else if(Map.class.isAssignableFrom(property.getClass())) {
-                        Object key = getKey(keyAttr, child);
+                        Object key = key(keyAttr, child);
                         ((Map)property).put(key, child);
                     }
                 }
@@ -254,6 +255,90 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         }
         catch(Exception e) {
             throw MetaBuilder.createCollectionException((String)name(), e);
+        }
+    }
+
+    protected Object size(Object sizeAttr, Object parent) {
+        Object size = null;
+        if(sizeAttr instanceof Closure) {
+            Closure sizeClosure = (Closure)sizeAttr;
+            size = sizeClosure.call(parent);
+        }
+        else if(sizeAttr instanceof String) {
+            size = InvokerHelper.getProperty(parent, (String)sizeAttr);
+        }
+        else {
+            throw MetaBuilder.createCollectionException((String)name(), "schema's size value is not a supported type");
+        }
+        return size;
+    }
+
+    public void checkSize(Object parent) {
+        Integer min = (Integer)attribute("min");
+        Integer max = (Integer)attribute("max");
+        
+        if(min == null || max == null) return;
+
+        Object sizeAttr = attribute("size");
+        Integer size = null;
+
+        try {
+            // If there is an size attribute, use it
+            if(sizeAttr != null) {
+                size = (Integer)size(sizeAttr, parent);
+            }
+            else {
+                Object collectionAttr = attribute("collection");
+                Object property = null;
+
+                if(collectionAttr == null) {
+                    collectionAttr = name();
+                }
+
+                if(collectionAttr instanceof Closure) {
+                    Closure collectionClosure = (Closure)collectionAttr;
+                    property = collectionClosure.call(parentBean);
+                }
+                else if(collectionAttr instanceof String) {
+                    // Special handling when both parent and child are SchemaNodes.
+                    // Can't use an 'add' Closure since that would affect non-SchemaNode types, by default.
+                    // Place here so that any 'add' or 'collection' Closures specified have the first chance
+                    // to override this behavior.
+                    if(parentBean instanceof SchemaNode) {
+                        SchemaNode parentNode = (SchemaNode)parentBean;
+                        NodeList nodeList = (NodeList)parentNode.get((String)collectionAttr);
+                        SchemaNode collectionNode = (SchemaNode)nodeList.get(0);
+                        property = collectionNode.children();
+                    }
+                    else {
+                        property = InvokerHelper.getProperty(parentBean, (String)collectionAttr);
+                    }
+                }
+
+                if(property != null) {
+                    if(Collection.class.isAssignableFrom(property.getClass())) {
+                        size = ((Collection)property).size();
+                    }
+                    else if(Map.class.isAssignableFrom(property.getClass())) {
+                        size = ((Map)property).size();
+                    }
+                }
+            }
+        }
+        catch(Exception e) {
+            throw MetaBuilder.createCollectionException((String)name(), e);
+        }
+
+        if(min != null) {
+            if((min > 0 && (size == null || min.compareTo(size) > 0))) {
+                throw MetaBuilder.createCollectionException((String)name(), "min check failed");
+            }
+        }
+
+        if(max != null) {
+            if(max.compareTo(size) < 0) {
+                throw MetaBuilder.createCollectionException((String)name(), "max check failed");
+            }
         }
     }
 

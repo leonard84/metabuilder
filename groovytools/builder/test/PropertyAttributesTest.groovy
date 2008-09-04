@@ -19,8 +19,8 @@ class PropertyAttributesTest extends GroovyTestCase {
             parent(factory: TestParent) {
                 properties {
                     name()
-                    name1(property: 'name')
-                    name2(property: { b, v -> b.setName(v) } )
+                    name2(property: 'name', check: ~/Lists.*/)
+                    name3(property: { b, v -> b.setName(v) } )
                     listOfChildren()
                 }
             }
@@ -29,10 +29,10 @@ class PropertyAttributesTest extends GroovyTestCase {
         def parent1 = mb.build { parent(name: 'Lists of Children1') }
         assertEquals('Lists of Children1', parent1.name)
 
-        def parent2 = mb.build { parent(name: 'Lists of Children2') }
+        def parent2 = mb.build { parent(name2: 'Lists of Children2') }
         assertEquals('Lists of Children2', parent2.name)
 
-        def parent3 = mb.build { parent(name: 'Lists of Children3') }
+        def parent3 = mb.build { parent(name3: 'Lists of Children3') }
         assertEquals('Lists of Children3', parent3.name)
     }
 

@@ -19,7 +19,10 @@ import groovy.lang.*;
 import groovy.util.*;
 import org.codehaus.groovy.runtime.*;
 
+import java.net.*;
 import java.util.*;
+import java.util.regex.*;
+import java.io.*;
 
 /**
  * <code>MetaBuilder</code> is a builder that uses schemas to more conveniently and correctly
@@ -39,7 +42,7 @@ import java.util.*;
  *
  * // Define a schema
  * mb.define {
- *    invoice {
+ *     invoice {
  *         collections {
  *             items {
  *                 item {
@@ -63,8 +66,8 @@ import java.util.*;
  * mb.build {
  *     invoice {
  *         items {
- *             item(qty: 1)
- *             item(qty: 20)
+ *             item(qty: 1)      // two equivalent ways to
+ *             item { qty = 20 } // set property values
  *         }
  *         payments {
  *             payment(amt: 100.00)
@@ -77,8 +80,11 @@ import java.util.*;
  * The schemas that may be defined are governed by the following meta-schema.  Note, <code>'%'</code> is used to stand
  * for any sequence of non-whitespace characters:
  * <pre>
+ * // default factories
  * def schemaNodeFactory = new MetaBuilder.SchemaNodeFactory()
  * def collectionSchemaNodeFactory = new MetaBuilder.CollectionSchemaNodeFactory()
+ *
+ * // some useful check closures
  * def nullOrBoolean = { v -> v == null || v instanceof Boolean }
  * def nullOrClosure = { v -> v == null || v instanceof Closure }
  * def nullOrStringOrClosure = { v -> v == null || v instanceof String || v instanceof Closure }
@@ -94,9 +100,12 @@ import java.util.*;
  *         collections(factory: schemaNodeFactory) {
  *             '%'(factory: collectionSchemaNodeFactory) {
  *                 properties(factory: schemaNodeFactory) {
- *                     collection(check: nullOrStringOrClosure )
- *                     key(check: nullOrStringOrClosure )
- *                     add(check: nullOrStringOrClosure )
+ *                     collection(check: nullOrStringOrClosure)
+ *                     min(check: nullOrInt)
+ *                     max(check: nullOrInt)
+ *                     size(check: nullOrStringOrClosure)
+ *                     key(check: nullOrStringOrClosure)
+ *                     add(check: nullOrStringOrClosure)
  *                 }
  *                 '%'(shema: metaSchema)
  *             }
@@ -108,6 +117,8 @@ import java.util.*;
  *                     check(check: nullOrClosure)
  *                     req(check: nullOrBoolean)
  *                     def()
+ *                     min()
+ *                     max()
  *                     // Inherited from metaSchema:
  *                     // schema()
  *                     // factory()
@@ -133,7 +144,7 @@ import java.util.*;
  * </tr>
  * <tr>
  *  <td><code>schema</code></td>
- *  <td>Allows a schema to inherit and extend the properties and collections of another schema.</td>
+ *  <td>Allows a schema to inherit and extend the properties and collections of another schema.  <a href="#extendingSchema">See below.</a></td>
  *  <td>The name of another schema.  Optional.  The named schema does not have to be previously defined.</td>
  *  <td>A previously defined schema object.</td>
  *  <td>n/a</td>
@@ -177,6 +188,38 @@ import java.util.*;
  *  </td>
  * </tr>
  * <tr>
+ *  <td>min (collection)</td>
+ *  <td>Used to specify the minimum collection size.  Optional.  The default is no minimum.</td>
+ *  <td>An <code>int</code> greater than or equal to 0.</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ * </tr>
+ * <tr>
+ *  <td>max (collection)</td>
+ *  <td>Used to specify the maximum collection size.  Optional.  The default is no maximum.</td>
+ *  <td>An <code>int</code>.</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ * </tr>
+ * <tr>
+ *  <td>size</td>
+ *  <td>Used to specify an alternative way to retrieve the size of a collection.  Optional.  The default is to access the collection using the node's name.</td>
+ *  <td>A property or field name</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>A {@link Closure} returning the size of the form
+ *   <ul>
+ *    <li><code>{o -> ...}</code></li>
+ *   </ul>
+ *   where
+ *   <ul>
+ *    <li><code>o</code> is the owner of the collection</li>
+ *   <ul>
+ *  </td>
+ * </tr>
+ * <tr>
  *  <td><code>key</code></td>
  *  <td>When collection is a {@link Map}, key must be defined to return the key to be used to add an object to children to the collection unless add is also specified with two arguments.</td>
  *  <td>A property or field name</td>
@@ -212,7 +255,7 @@ import java.util.*;
  * </tr>
  * <tr>
  *  <td><code>property</code></td>
- *  <td>Used to identify or modify the actual property.  Optional.  The default is to set the property using the node's name.  Note that this value may be inherited or overridden.</td>
+ *  <td>Used to identify or modify the actual property.  Optional.  The default is to set the property using the node's name.</td>
  *  <td>A property or field name.</td>
  *  <td>n/a</td>
  *  <td>n/a</td>
@@ -228,9 +271,31 @@ import java.util.*;
  *  </td>
  * </tr>
  * <tr>
- *  <td><code>check</code></td>
- *  <td>Used to specify a check on the value of the property.  Optional.  Note that when inherited and overridden, all checks in the hierarchy are applied.</td>
+ *  <td>min (property)</td>
+ *  <td>Used to specify the minimum property size.  Optional.  The default is no minimum.  The size of a property is property dependent:
+ *    <ul><li>for {@link String}s, <code>length()</code> is used
+ *    </li><li>for {@link Collection}s and {@link Map}s, <code>size()</code> is used
+ *    </li><li>for {@link Collection}s and {@link Map}s, <code>size()</code> is used
+ *    </li><li>for all other {@link Comparable}s, the value itself is used
+ *    </li><ul>It is an error to use any other non-{@link Comparable} type.
+ * </td>
+ *  <td>A {@link Comparable} type, such as {@link Integer} or {@link Double}.</td>
  *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ * </tr>
+ * <tr>
+ *  <td>max (property)</td>
+ *  <td>Used to specify the maximum property size.  Optional.  The default is no maximum.  See min (property) above.</td>
+ *  <td>A {@link Comparable} type, such as {@link Integer} or {@link Double}.</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
+ * </tr>
+ * <tr>
+ *  <td><code>check</code></td>
+ *  <td>Used to specify a check on the value of the property.  Optional.</td>
+ *  <td>A {@link Pattern} used to test the value, i.e. <code>~/cheese/</code>.</td>
  *  <td>n/a</td>
  *  <td>n/a</td>
  *  <td>A {@link Closure} returning a Groovy Truth value of the form
@@ -245,7 +310,7 @@ import java.util.*;
  * </tr>
  * <tr>
  *  <td><code>req</code></td>
- *  <td>Used to specify if a property must be specified.  Optional.  Note that this value may be inherited but not overridden.</td>
+ *  <td>Used to specify if a property must be specified.  Optional.</td>
  *  <td>n/a</td>
  *  <td><code>true</code> or <code>false</code></td>
  *  <td>n/a</td>
@@ -253,13 +318,42 @@ import java.util.*;
  * </tr>
  * <tr>
  *  <td><code>def</code></td>
- *  <td>Used to specify a default value.  Optional.  Note that this value may be inherited or overridden.</td>
+ *  <td>Used to specify a default value.  Optional.</td>
  *  <td>Any literal value may be passed to the property.</td>
  *  <td>Any object may be passed to the property.</td>
  *  <td>Any {@link Class} is passed like an object.</td>
- *  <td>Any {@link Closure} is passed like an object.</td>
+ *  <td>A {@link Closure} returning a result of the form:
+ *   <ul>
+ *    <li><code>{-> ...}</code></li>
+ *   </ul>
+ *   The {@link Closure} is called each time a default value is needed.
+ *  </td>
  * </tr>
  * </table>
+ * <a name="extendingSchema"/>
+ * <h3>Inheriting and Extending Schemas</h3>
+ * By using the <code>schema</code> property, your schemas can inherit and extend from other schemas.  This can be a
+ * powerful technique and allows you to reuse schemas and even create recursive models.  For example:
+ * <pre>
+ *  MetaBuilder mb = new MetaBuilder()
+ *  def parentDef = mb.define {
+ *      parent(factory: TestParent) {
+ *          properties {
+ *              name(req: true)
+ *          }
+ *          collections {
+ *              listOfChildren {
+ *                  child(schema: 'parent') {
+ *                      properties {
+ *                          name(req: false)  // would have been true without this
+ *                      }
+ *                  }
+ *              }
+ *          }
+ *      }
+ *  }
+ * </pre>
+ * The above example also shows how a sub-schema can override the property settings of its super-schema.
  *
  * @see ObjectGraphBuilder
  *
@@ -268,8 +362,8 @@ import java.util.*;
  */
 public class MetaBuilder extends Binding {
     private Map schemas;
-    private Node defaultMetaSchema;
-    private ClassLoader classLoader;
+    private SchemaNode defaultMetaSchema;
+    private GroovyClassLoader classLoader;
     private Factory defaultBuildNodeFactory;
     private Factory defaultDefineNodeFactory;
 
@@ -280,7 +374,7 @@ public class MetaBuilder extends Binding {
      */
     public MetaBuilder() {
         this(null, null);
-        this.classLoader = getClass().getClassLoader();
+        setClassLoader(getClass().getClassLoader());
         this.defaultMetaSchema = createDefaultMetaSchema();
     }
 
@@ -300,12 +394,28 @@ public class MetaBuilder extends Binding {
      *
      * @param defaultMetaSchema the default schema
      */
-    public MetaBuilder(Node defaultMetaSchema, ClassLoader classLoader) {
+    public MetaBuilder(SchemaNode defaultMetaSchema, ClassLoader classLoader) {
         schemas = new HashMap();
+        setClassLoader(classLoader);
         this.defaultMetaSchema = defaultMetaSchema;
         this.defaultBuildNodeFactory = createDefaultBuildNodeFactory();
         this.defaultDefineNodeFactory = createDefaultDefineNodeFactory();
-        this.classLoader = classLoader;
+    }
+
+    public Factory getDefaultBuildNodeFactory() {
+        return defaultBuildNodeFactory;
+    }
+
+    public void setDefaultBuildNodeFactory(Factory defaultBuildNodeFactory) {
+        this.defaultBuildNodeFactory = defaultBuildNodeFactory;
+    }
+
+    public Factory getDefaultDefineNodeFactory() {
+        return defaultDefineNodeFactory;
+    }
+
+    public void setDefaultDefineNodeFactory(Factory defaultDefineNodeFactory) {
+        this.defaultDefineNodeFactory = defaultDefineNodeFactory;
     }
 
     /**
@@ -313,7 +423,7 @@ public class MetaBuilder extends Binding {
      *
      * @return see above
      */
-    protected Factory createDefaultDefineNodeFactory() {
+    private Factory createDefaultDefineNodeFactory() {
         return new DefaultDefineSchemaNodeFactory();
     }
 
@@ -322,7 +432,7 @@ public class MetaBuilder extends Binding {
      *
      * @return see above
      */
-    protected Factory createDefaultBuildNodeFactory() {
+    private Factory createDefaultBuildNodeFactory() {
         return new DefaultBuildSchemaNodeFactory();
     }
 
@@ -332,7 +442,7 @@ public class MetaBuilder extends Binding {
      *
      * @return see above
      */
-    protected Node createDefaultMetaSchema() {
+    protected SchemaNode createDefaultMetaSchema() {
 
         Factory schemaNodeFactory = new DefaultDefineSchemaNodeFactory();
         Factory collectionNodeFactory = new DefaultCollectionSchemaNodeFactory();
@@ -345,6 +455,18 @@ public class MetaBuilder extends Binding {
         Closure nullOrClosure = new Closure(this) {
             public Object call(Object v) {
                 return v == null || v instanceof Closure;
+            }
+        };
+
+        Closure nullOrClosureOrPattern = new Closure(this) {
+            public Object call(Object v) {
+                return v == null || v instanceof Closure || v instanceof Pattern;
+            }
+        };
+
+        Closure nullOrInt = new Closure(this) {
+            public Object call(Object v) {
+                return v == null || v instanceof Integer;
             }
         };
 
@@ -383,12 +505,18 @@ public class MetaBuilder extends Binding {
         SchemaNode colSchema = new SchemaNode(colsSchema, "%");  // allows the collection to have any name, e.g. foos
         colSchema.attributes().put("factory", collectionNodeFactory);
         SchemaNode colSchemaProperties = new SchemaNode(colSchema, "properties");
-        SchemaNode colNode = new SchemaNode(colSchemaProperties, "collection");
-        colNode.attributes().put("check", nullOrStringOrClosure);
-        SchemaNode addNode = new SchemaNode(colSchemaProperties, "add");
-        addNode.attributes().put("check", nullOrStringOrClosure);
-        SchemaNode keyNode = new SchemaNode(colSchemaProperties, "key");
-        keyNode.attributes().put("check", nullOrStringOrClosure);
+        SchemaNode colSchemaPropertiesCollection = new SchemaNode(colSchemaProperties, "collection");
+        colSchemaPropertiesCollection.attributes().put("check", nullOrStringOrClosure);
+        SchemaNode colSchemaPropertiesMin = new SchemaNode(colSchemaProperties, "min");
+        colSchemaPropertiesMin.attributes().put("check", nullOrInt);
+        SchemaNode colSchemaPropertiesMax = new SchemaNode(colSchemaProperties, "max");
+        colSchemaPropertiesMax.attributes().put("check", nullOrInt);
+        SchemaNode colSchemaPropertiesSize = new SchemaNode(colSchemaProperties, "size");
+        colSchemaPropertiesSize.attributes().put("check", nullOrStringOrClosure);
+        SchemaNode colSchemaPropertiesAdd = new SchemaNode(colSchemaProperties, "add");
+        colSchemaPropertiesAdd.attributes().put("check", nullOrStringOrClosure);
+        SchemaNode colSchemaPropertiesKey = new SchemaNode(colSchemaProperties, "key");
+        colSchemaPropertiesKey.attributes().put("check", nullOrStringOrClosure);
 
         SchemaNode colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name, e.g. foo
         colElementSchema.attributes().put("schema", metaSchema);
@@ -405,8 +533,11 @@ public class MetaBuilder extends Binding {
         SchemaNode reqNode = new SchemaNode(propertiesElementSchemaProperties, "req");
         reqNode.attributes().put("check", nullOrBoolean);
         SchemaNode defNode = new SchemaNode(propertiesElementSchemaProperties, "def");
+        // no check needed for defa
         SchemaNode checkNode = new SchemaNode(propertiesElementSchemaProperties, "check");
-        checkNode.attributes().put("check", nullOrClosure);
+        checkNode.attributes().put("check", nullOrClosureOrPattern);
+        SchemaNode minNode = new SchemaNode(propertiesElementSchemaProperties, "min");
+        SchemaNode maxNode = new SchemaNode(propertiesElementSchemaProperties, "max");
 
         return metaSchema;
     }
@@ -450,8 +581,8 @@ public class MetaBuilder extends Binding {
         }
     }
 
-    public Object define(final String script, GroovyClassLoader loader) {
-        return define(loader.parseClass(script));
+    public Object define(URL url) throws IOException {
+        return define(classLoader.parseClass(url.openStream()));
     }
 
     public Object build(Closure c) {
@@ -470,6 +601,10 @@ public class MetaBuilder extends Binding {
         }
     }
 
+    public Object build(URL url) throws IOException {
+        return build(classLoader.parseClass(url.openStream()));
+    }
+
     public Object build(Script script) {
         synchronized (script) {
             MetaClass scriptMetaClass = script.getMetaClass();
@@ -484,10 +619,6 @@ public class MetaBuilder extends Binding {
         }
     }
 
-    public Object build(final String script, GroovyClassLoader loader) {
-        return build(loader.parseClass(script));
-    }
-
     /**
      * Returns a previously defined schema with the given name.
      *
@@ -495,20 +626,19 @@ public class MetaBuilder extends Binding {
      *
      * @return see above
      */
-    public Object getSchema(String name) {
-        return schemas.get(name);
+    public SchemaNode getSchema(String name) {
+        return (SchemaNode)schemas.get(name);
     }
 
     /**
      * Adds a previously defined schema with the given name.
      *
      * @param name see above
-     * @param schema
+     * @param schema see above
      *
-     * @return see above
      */
-    public Object addSchema(String name, Object schema) {
-        return schemas.put(name, schema);
+    public void addSchema(String name, Object schema) {
+        schemas.put(name, schema);
     }
 
     /**
@@ -525,7 +655,7 @@ public class MetaBuilder extends Binding {
      *
      * @return see above
      */
-    public Node getDefaultMetaSchema() {
+    public SchemaNode getDefaultMetaSchema() {
         return defaultMetaSchema;
     }
 
@@ -537,7 +667,7 @@ public class MetaBuilder extends Binding {
      *
      * @return see above
      */
-    protected MetaObjectGraphBuilder createMetaObjectGraphBuilder(Node defaultSchema, Factory defaultNodeFactory) {
+    protected MetaObjectGraphBuilder createMetaObjectGraphBuilder(SchemaNode defaultSchema, Factory defaultNodeFactory) {
         return new MetaObjectGraphBuilder(this, defaultSchema, defaultNodeFactory);
     }
 
@@ -548,7 +678,7 @@ public class MetaBuilder extends Binding {
      * @param classLoader the {@link ClassLoader} to use
      */
     public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
+        this.classLoader = classLoader instanceof GroovyClassLoader ? (GroovyClassLoader)classLoader : new GroovyClassLoader(classLoader);
     }
 
     public static RuntimeException createPropertyException(String name, String error) {
@@ -607,12 +737,6 @@ public class MetaBuilder extends Binding {
      */
     protected static class DefaultBuildSchemaNodeFactory extends AbstractFactory {
         public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
-            SchemaNode schemaNode = (SchemaNode)builder.getCurrent();
-            if(schemaNode instanceof CollectionSchemaNode) {
-                CollectionSchemaNode collectionSchemaNode = (CollectionSchemaNode)schemaNode;
-                SchemaNode parent = (SchemaNode)collectionSchemaNode.getParentBean();
-//                new SchemaNode(parent, name);
-            }
             return new SchemaNode(null, name);
         }
     }

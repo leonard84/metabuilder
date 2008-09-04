@@ -25,7 +25,7 @@ import java.util.*;
  * @author didge
  * @version $Id$
  */
-public class SchemaNode extends Node{
+public class SchemaNode extends Node {
 
     protected SchemaNode _parent;
 
@@ -76,9 +76,10 @@ public class SchemaNode extends Node{
         }
         List list = null;
         Object value = value();
-        if (value instanceof List) {
-            list = (List) value;
-        } else {
+        if(value instanceof List) {
+            list = (List)value;
+        }
+        else {
             list = new NodeList();
             list.add(value);
             setValue(list);
@@ -94,5 +95,22 @@ public class SchemaNode extends Node{
      */
     public Node parent() {
         return _parent;
+    }
+
+    public Object firstChild(String name) {
+        Object value = value();
+        if(value != null && value instanceof List) {
+            List children = (List)value;
+            for(int i = 0; i < children.size(); i++) {
+                Object child = children.get(i);
+                if(child instanceof Node) {
+                    Node childNode = (Node)child;
+                    if(name.equals(childNode.name())) {
+                        return childNode;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

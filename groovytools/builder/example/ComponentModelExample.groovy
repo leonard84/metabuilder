@@ -1,9 +1,10 @@
 /**
- * A example demonstrating defining and building a non-trivial component model.
+ * An example demonstrating defining and building a non-trivial component model.
  *
  * @author didge
  * @version $Id$
  */
+
 import groovytools.builder.*;
 
 MetaBuilder mb = new MetaBuilder(classLoader: getClass().classLoader)
