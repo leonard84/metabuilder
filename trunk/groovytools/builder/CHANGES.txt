@@ -1,9 +1,21 @@
+1.1.0
+-----
+* Fixed how extended properties were resolved. 
+* Created a better scheme for processing def and req properties.
+* Added support for min and max properties on collections and properties.
+* Added ability to specify property value with =.
+* Added ability to specify def value as a closure.
+* Added MetaConfigBuilder, which adds support for ConfigSlurper-like scripts.
+* Fixed issue with default factory assignments in subclasses of MetaBuilder.
+* Added ClassGeneratingMetaBuilder example.
+* Added new URL method versions of build() and define() to MetaBuilder.
+
 1.0.1
 -----
-    * Updated to support Groovy 1.6-beta2.
-    * Added missing LICENSE.txt, NOTICE.txt, and README.txt files.
-    * Updated build.xml publish-doc and publish-release targets to use rsync.
+* Updated to support Groovy 1.6-beta2.
+* Added missing LICENSE.txt, NOTICE.txt, and README.txt files.
+* Updated build.xml publish-doc and publish-release targets to use rsync.
 
 1.O.0
 -----
-    * Initial release.
+* Initial release.
