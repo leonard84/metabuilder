@@ -254,6 +254,7 @@
 			<arg value="${release.name}/example/InvoiceExample.groovy"/>
 			<arg value="${release.name}/example/ComponentModelExample.groovy"/>
 			<arg value="${release.name}/example/ClassGeneratingMetaBuilder.groovy"/>
+			<arg value="${release.name}/example/ExpandoGeneratingMetaBuilder.groovy"/>
 			<arg value="${env.USER}@shell.sourceforge.net:~/groovytools/htdocs/builder"/>
 
 		</exec>
