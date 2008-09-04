@@ -7,6 +7,7 @@
 * Added ability to specify def value as a closure.
 * Added MetaConfigBuilder, which adds support for ConfigSlurper-like scripts.
 * Fixed issue with default factory assignments in subclasses of MetaBuilder.
+* Added ExpandoGeneratingMetaBuilder example.
 * Added ClassGeneratingMetaBuilder example.
 * Added new URL method versions of build() and define() to MetaBuilder.
 * Added Pattern as a supported type for check properties.  
