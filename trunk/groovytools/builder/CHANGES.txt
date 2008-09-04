@@ -9,6 +9,7 @@
 * Fixed issue with default factory assignments in subclasses of MetaBuilder.
 * Added ClassGeneratingMetaBuilder example.
 * Added new URL method versions of build() and define() to MetaBuilder.
+* Added Pattern as a supported type for check properties.
 
 1.0.1
 -----
