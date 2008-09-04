@@ -13,7 +13,7 @@
   ~ limitations under the License.
   ~
   ~ Author : didge
-  ~ $ID$
+  ~ $Id$
   -->
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -134,8 +134,8 @@
         def price
     } </pre>
 <p>
-    Here is what you would do to the previous schema to have <b>MetaBuilder</b> now construct an Invoice as
-    above:
+    Here is what you would do to the previous schema to have
+    <b>MetaBuilder</b> now construct an Invoice as above:
 </p>
 <pre>
         import groovytools.builder.*
@@ -160,7 +160,8 @@
             }
         } </pre>
 <p>
-    Now, without any other changes, executing the build script just as before but with the new schema returns an Invoice!
+    Now, without any other changes, executing the build script just as before 
+    but with the new schema returns an Invoice!
 </p>
 <pre>
         def anInvoice = <strong>mb.build</strong> {
@@ -176,8 +177,14 @@
 <h2>Documentation and Examples</h2>
 <ul>
     <li><b><a href="example/InvoiceExample.groovy" type="text/plain">InvoiceExample.groovy</a></b> is a more extensive version of the above demonstrating
-        most of <b>MetaBuilder</b>'s features</li>
+        many of <b>MetaBuilder</b>'s features</li>
     <li><b><a href="example/ComponentModelExample.groovy" type="text/plain">ComponentModelExample.groovy</a></b> is another example involving a UI component model.</li>
+    <li><b><a href="example/ExpandoGeneratingMetaBuilder.groovy" type="text/plain">ClassGeneratingMetaBuilder.groovy</a></b> is an example showing how to 
+    build a hierarchy of Expando objects based on the schema.</li>
+    <li><b><a href="example/ClassGeneratingMetaBuilder.groovy" type="text/plain">ClassGeneratingMetaBuilder.groovy</a></b> is an example showing how to 
+    extend <b>MetaBuilder</b> by substituting its default build node factory 
+    with one that automatically generates new classes on the fly based on the 
+    schema.</li>
     <li><a href="http://groovytools.sourceforge.net/builder/doc/api/">JavaDoc API</a>.</li>
     <li>The <a href="http://groovytools.sourceforge.net/builder/doc/api/groovytools/builder/MetaBuilder.html#metaschema">MetaBuilder Meta-Schema</a>.</li>
 </ul>
@@ -199,7 +206,7 @@
 </ul>
 <h2>Getting Help</h2>
 <ul>
-    <li>Please use the online <a href="http://sourceforge.net/forum/forum.php?forum_id=746505">groovytools help forum</a> for assistance.
+    <li>Please use the online <a href="http://sourceforge.net/forum/?group_id=208227">groovytools help forum</a> for assistance.
     </li>
 </ul>
 <h2>Licensing</h2>
