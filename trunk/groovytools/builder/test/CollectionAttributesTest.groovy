@@ -13,7 +13,7 @@ class CollectionAttributesTest extends GroovyTestCase {
         def parentDef = mb.define {
             child(factory: TestChild) {
                 properties {
-                    name()
+                    name(min: 3)
                 }
             }
             parent(factory: TestParent) {
@@ -22,7 +22,7 @@ class CollectionAttributesTest extends GroovyTestCase {
                     listOfChildrenAsProperty(property: 'listOfChildren')
                 }
                 collections {
-                    listOfChildren { // simple example of a collection of child objects
+                    listOfChildren (min: 1 ) { // simple example of a collection of child objects
                         child(schema: 'child')
                     }
                     listOfChildren2(collection: "listOfChildren") { // uses the collection above
@@ -31,10 +31,10 @@ class CollectionAttributesTest extends GroovyTestCase {
                     listOfChildren3(collection: {p -> p.getListOfChildren() }) {
                         child(schema: 'child')
                     }
-                    listOfChildren4(add: 'addChildToList') {
+                    listOfChildren4(add: 'addChildToList', size: 'listSize') {
                         child(schema: 'child')
                     }
-                    listOfChildren5(add: {p, c -> p.addChildToList(c) }) {
+                    listOfChildren5(add: {p, c -> p.addChildToList(c) }, size: {p -> p.listSize() } ) {
                         child(schema: 'child')
                     }
                     mapOfChildren(key: 'name') { // simple example of a Map of child objects, using getName() as the key

@@ -13,7 +13,16 @@ public class TestParent {
         listOfChildren.add(child)
     }
 
+    public int getListSize() {
+        return listOfChildren.size()
+    }
+
     public void addChildToMap(Object key, TestChild child) {
        mapOfChildren.put(key, child) 
     }
+
+    public int getMapSize() {
+        return mapOfChildren.size()
+    }
+
 }

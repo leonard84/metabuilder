@@ -24,7 +24,7 @@
 	<property environment="env"/>
 
 	<property name="name" value="groovytools-builder" />
-	<property name="version" value="1.0.1" />
+	<property name="version" value="1.0.2" />
 
 	<path id="build.classpath">
 		<pathelement path="src"/>
@@ -260,7 +260,8 @@
     </target>
 
     <target name="publish-release" depends="properties">
-		<exec executable="rsync">
+        <input message="${env.USER}@frs.sourceforge.net's password:" addProperty="frs.password"/>
+		<exec executable="rsync" inputstring="${frs.password}">
 			<arg value="-avP"/>
 			<arg value="-e"/>
 			<arg value="ssh"/>

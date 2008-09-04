@@ -1,5 +1,3 @@
-import groovytools.builder.MetaBuilder
-
 /**
  * <code>InvoiceExample</code> demonstrates a number of  {@link MetaBuilder}  features in an increasingly complicated
  * manner.
@@ -7,6 +5,9 @@ import groovytools.builder.MetaBuilder
  * @author didge
  * @version $Id$
  */
+
+import groovytools.builder.*
+
 
 MetaBuilder mb = new MetaBuilder()
 

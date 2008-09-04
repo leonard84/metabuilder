@@ -8,7 +8,11 @@ import groovytools.builder.MetaBuilder
  */
 class SchemaAttributeTest extends GroovyTestCase {
     public void test1() {
-        MetaBuilder mb = new MetaBuilder()
+        
+        MetaBuilder mb = new MetaBuilder(TestParent.getClassLoader())  // Using TestParent's classLoader so instanceof
+                                                                       // test below will pass.  When running through
+                                                                       // Ant, the classLoaders would otherwise be
+                                                                       // different.
         mb.define {
             original(factory: TestParent) {
                 properties {
