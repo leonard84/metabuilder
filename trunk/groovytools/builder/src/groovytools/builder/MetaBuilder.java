@@ -128,8 +128,8 @@ import java.io.*;
  *     }
  * }
  * </pre>
- * <h2>Property Values</h2>
- * The following table describes the allowable property values when defining your own schema using <code>MetaBuilder</code>'s
+ * <h2>Schema Attributes</h2>
+ * The following table describes the schema attributes you may use when defining your own schema using <code>MetaBuilder</code>'s
  * default meta-schema. Values may be of type: literal, object, {@link Class} and/or {@link Closure}.
  * <p/>
  * Only one value may be specied for each property at a time.
@@ -180,7 +180,7 @@ import java.io.*;
  *  <td>A {@link Closure} returning the collection of the form
  *   <ul>
  *    <li><code>{o -> ...}</code></li>
- *   </li>
+ *   </ul>
  *   where
  *   <ul>
  *    <li><code>o</code> is the owner of the collection</li>
@@ -225,7 +225,10 @@ import java.io.*;
  *  <td>A property or field name</td>
  *  <td>n/a</td>
  *  <td>n/a</td>
- *  <td><code>{c -> ...}</code><br/>
+ *  <td>A {@link Closure} of the form
+ *   <ul>
+ *    <li><code>{c -> ...}</code></li>
+ *   </ul>
  *   where
  *   <ul>
  *    <li><code>c</code> is the child</li>
@@ -294,19 +297,14 @@ import java.io.*;
  * </tr>
  * <tr>
  *  <td><code>check</code></td>
- *  <td>Used to specify a check on the value of the property.  Optional.</td>
- *  <td>A {@link Pattern} used to test the value, i.e. <code>~/cheese/</code>.</td>
- *  <td>n/a</td>
- *  <td>n/a</td>
- *  <td>A {@link Closure} returning a Groovy Truth value of the form
- *   <ul>
- *    <li><code>{v -> ...}</code></li>
- *   </ul>
- *   where
- *   <ul>
- *    <li><code>v</code> is the value</li>
- *   <ul>
- *  </td>
+ *  <td>Used to specify a check on the value of the property, which will result in an exception if the check fails.  Optional.</td>
+ *  <td colspan='4'>Any object or literal.  The result of the check is logically equivalent to the result of executing the Groovy switch:
+ * <pre>
+ *     switch(value) {
+ *         case check: return true
+ *     }
+ *     return false
+ * </pre>
  * </tr>
  * <tr>
  *  <td><code>req</code></td>

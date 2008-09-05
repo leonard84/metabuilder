@@ -1,3 +1,13 @@
+1.1.1
+-----
+* Now implementing check to be equivalent to:
+    switch(value) {
+      case check: return true
+    }
+    return false
+  This means you can now use Closures, Patterns, Classes, Numbers, Strings, 
+  Ranges, and Collections for your check.
+
 1.1.0
 -----
 * Fixed how extended properties were resolved. 
