@@ -276,7 +276,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         SchemaNode childSchema = popSchema();
 
         // go through the unset properties and set defaults or check if req
-        Map unsetProperties = getCurrentProperties();
+        Map unsetProperties = new HashMap(getCurrentProperties()); // use copy to avoid ConcurrentModificationException
         for(Iterator properties = unsetProperties.entrySet().iterator(); properties.hasNext();) {
             Map.Entry property = (Map.Entry)properties.next();
             SchemaNode propertySchema = (SchemaNode)property.getValue();
