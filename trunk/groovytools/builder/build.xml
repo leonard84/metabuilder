@@ -250,12 +250,26 @@
 			<arg value="${release.name}/LICENSE.txt"/>
 			<arg value="${release.name}/NOTICE.txt"/>
 			<arg value="${release.name}/CHANGES.txt"/>
-			<arg value="${release.name}/doc/api/"/>
+			<arg value="${env.USER}@shell.sourceforge.net:~/groovytools/htdocs/builder"/>
+
+		</exec>
+		<exec executable="rsync">
+			<arg value="-avP"/>
+			<arg value="-e"/>
+			<arg value="ssh"/>
 			<arg value="${release.name}/example/InvoiceExample.groovy"/>
 			<arg value="${release.name}/example/ComponentModelExample.groovy"/>
 			<arg value="${release.name}/example/ClassGeneratingMetaBuilder.groovy"/>
 			<arg value="${release.name}/example/ExpandoGeneratingMetaBuilder.groovy"/>
-			<arg value="${env.USER}@shell.sourceforge.net:~/groovytools/htdocs/builder"/>
+			<arg value="${env.USER}@shell.sourceforge.net:~/groovytools/htdocs/builder/example"/>
+
+		</exec>
+		<exec executable="rsync">
+			<arg value="-avP"/>
+			<arg value="-e"/>
+			<arg value="ssh"/>
+			<arg value="${release.name}/doc/api/"/>
+			<arg value="${env.USER}@shell.sourceforge.net:~/groovytools/htdocs/builder/doc/api"/>
 
 		</exec>
     </target>
