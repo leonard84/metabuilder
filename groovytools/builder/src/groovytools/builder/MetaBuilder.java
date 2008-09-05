@@ -533,7 +533,6 @@ public class MetaBuilder extends Binding {
         SchemaNode defNode = new SchemaNode(propertiesElementSchemaProperties, "def");
         // no check needed for defa
         SchemaNode checkNode = new SchemaNode(propertiesElementSchemaProperties, "check");
-        checkNode.attributes().put("check", nullOrClosureOrPattern);
         SchemaNode minNode = new SchemaNode(propertiesElementSchemaProperties, "min");
         SchemaNode maxNode = new SchemaNode(propertiesElementSchemaProperties, "max");
 
