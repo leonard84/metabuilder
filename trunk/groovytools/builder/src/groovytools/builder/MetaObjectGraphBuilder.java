@@ -18,10 +18,8 @@ package groovytools.builder;
 import groovy.lang.*;
 import groovy.util.*;
 import org.codehaus.groovy.runtime.*;
-import org.codehaus.groovy.runtime.typehandling.*;
 
 import java.util.*;
-import java.util.regex.*;
 
 /**
  * This class is the workhorse behind {@link MetaBuilder}.  It is responsible for building object hierarchies according
@@ -448,22 +446,17 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @param val the value
      */
     protected void checkPropertyValue(SchemaNode propertySchema, Object val) {
+        if(propertySchema.attributes().containsKey("check") == false) return;
         Object check = propertySchema.attribute("check");
-        if(check != null) {
-            if(check instanceof Closure) {
-                Closure checkClosure = (Closure)check;
-                Object b = checkClosure.call(val);
-
-                if(DefaultTypeTransformation.booleanUnbox(b) == false) {
-                    throw MetaBuilder.createPropertyException((String)propertySchema.name(), "value invalid");
-                }
-            }
-            else if(val != null && check instanceof Pattern) {
-                Pattern checkPattern = (Pattern)check;
-                if(checkPattern.matcher((CharSequence)val).matches() == false) {
-                    throw MetaBuilder.createPropertyException((String)propertySchema.name(), "value invalid");
-                }
-            }
+        boolean b = true;
+        try {
+            b =  ScriptBytecodeAdapter.isCase(val, check);
+        }
+        catch(Throwable t) {
+            throw MetaBuilder.createPropertyException((String)propertySchema.name(), t);
+        }
+        if(!b) {
+            throw MetaBuilder.createPropertyException((String)propertySchema.name(), "value invalid");
         }
     }
 
