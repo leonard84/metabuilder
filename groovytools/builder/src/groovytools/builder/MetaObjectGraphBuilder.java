@@ -135,17 +135,43 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @return see above
      */
     protected SchemaNode findSchema(SchemaNode parentSchema, String containerName, String name) {
-        NodeList schemaNodesList = (NodeList)parentSchema.get(containerName);
-        SchemaNode nodesSchema = schemaNodesList.size() > 0 ? (SchemaNode)schemaNodesList.get(0) : null;
-        NodeList nodes = nodesSchema != null ? (NodeList)nodesSchema.get(name) : null;
-        nodes = nodes != null && nodes.size() > 0 ? nodes : nodesSchema != null ? (NodeList)nodesSchema.get("%") : null;
-        SchemaNode childSchema = nodes != null && nodes.size() > 0 ? (SchemaNode)nodes.get(0) : null;
+        SchemaNode childSchema = null;
+        SchemaNode containerSchema = (SchemaNode)parentSchema.firstChild(containerName);
+        if(containerSchema != null) {
+            childSchema = (SchemaNode)containerSchema.firstChild(name);
+        }
         if(childSchema == null) {
+            // Search super schemas for name
             Object extendSchemaRef = parentSchema.attribute("schema");
             SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
             if(extendSchema != null) childSchema = findSchema(extendSchema, containerName, name);
         }
+
         return childSchema;
+    }
+
+    protected SchemaNode findCollectionSchema(SchemaNode parentSchema, String name) {
+        SchemaNode result = null;
+        SchemaNode collectionsSchema = (SchemaNode)parentSchema.firstChild("collections");
+        List collectionList = collectionsSchema != null ? collectionsSchema.children() : null;
+        if(collectionList == null) return null;
+        for(int i = 0; i < collectionList.size(); i++) {
+            Object o = collectionList.get(i);
+            if(o instanceof SchemaNode == false) continue;
+            SchemaNode collectionSchema = (SchemaNode)o;
+            result = (SchemaNode)collectionSchema.firstChild(name);
+
+            if(result == null) {
+                // Search super schemas for name
+                Object extendSchemaRef = collectionSchema.attribute("schema");
+                SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
+                if(extendSchema != null) {
+                    result = findCollectionSchema(extendSchema, name);
+                }
+            }
+            if(result != null) break;
+        }
+        return result;
     }
 
     protected Object findSchemaAttribute(SchemaNode parentSchema, String name) {
@@ -167,12 +193,13 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @return a node
      */
     protected Object createNode(Object name, Map attributes, Object value) {
+        String childSchemaName = (String)name;
         // MetaObjectGraphBuilder bascially works by matching name against a child node of the current schema.
         SchemaNode currentSchema = getCurrentSchema();
         SchemaNode childSchema = null;
         if(currentSchema == null) {
             // If there is no current schema, its because the builder is building the root node.
-            currentSchema = metaBuilder.getSchema((String)name);
+            currentSchema = metaBuilder.getSchema(childSchemaName);
         }
         if(currentSchema == null) {
             // If we can't find a schema using the root node's name, try using the default schema
@@ -181,35 +208,47 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         else if(getCurrent() == null) {
             // No current node exists, see if the  schema supports any name
             String rootName = (String)currentSchema.name();
-            if(!rootName.equals(name) && !rootName.equals("%")) {
-                throw new IllegalArgumentException((String)name);
+            if(!rootName.equals(childSchemaName) && !rootName.equals("%")) {
+                throw new IllegalArgumentException(childSchemaName);
             }
             childSchema = currentSchema;
         }
         else {
-            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", (String)name);
+            // search for a property
+            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", childSchemaName);
 
-            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", (String)name);
-            if(childSchema == null) {
-                NodeList nodeList = (NodeList)currentSchema.get((String)name);
-                if(nodeList.size() == 0) nodeList = (NodeList)currentSchema.get("%");
-                if(nodeList.size() > 0) {
-                    childSchema = (SchemaNode)nodeList.get(0);
-                }
-            }
+            // search for a named collection
+            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", childSchemaName);
+
+            // search for a collection member (current schema is a collection node)
+            childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild(childSchemaName);
+
+            // search all collections for a named collection member
+            childSchema = childSchema != null ? childSchema : findCollectionSchema(currentSchema, childSchemaName);
+
+            // search for an unnamed property
+            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", "%");
+
+            // search for an unnamed collection
+            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", "%");
+
+            // search for an unamed schema node
+            childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild("%");
         }
         if(childSchema == null) {
-            throw MetaBuilder.createSchemaNotFoundException((String)name);
+            throw MetaBuilder.createSchemaNotFoundException(childSchemaName);
         }
 
         pushSchema(childSchema);
-        // store the set of mergedProperties for later checking of defaults and missing req properties
+        // Store a mutable copy of the merged properties for later checking of defaults and missing req properties
+        // As properties are set, they are removed from the copy of merged properties.
+        // Only the merged properties that are left are checked for req and def
         SchemaNode mergedProperties = getMergedProperties(childSchema);
         pushProperties(mergedProperties);
 
         Object node = null;
         try {
-            node = super.createNode(name, attributes, value);
+            node = super.createNode(childSchemaName, attributes, value);
         }
         catch(RuntimeException e) {
             // If FactoryBuilderSupport throws an exception caused by
@@ -224,16 +263,33 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         }
         if(currentSchema == null) {
             // will only be null if defining a top level schema
-            metaBuilder.addSchema((String)name, node);
+            metaBuilder.addSchema(childSchemaName, node);
         }
 
         return node;
     }
 
+    /**
+     * Sets thet node's property value by name referencing the current schema.  Invoked when using '=' to set a property
+     * value.
+     *
+     * @param name the property name
+     * @param value the property value
+     *
+     * @see #setVariable(Object, SchemaNode, String, Object)
+     */
     public void setVariable(String name, Object value) {
         setVariable(getCurrent(), getCurrentSchema(), name, value);
     }
 
+    /**
+     * Sets the given node's property value by name referencing the given schema.
+     *
+     * @param node the property owner
+     * @param schema the property owner's schema
+     * @param name the property name
+     * @param value the property value
+     */
     public void setVariable(Object node, SchemaNode schema, String name, Object value) {
         SchemaNode mergedProperties = getMergedProperties(schema);
         SchemaNode propertySchema = (SchemaNode)mergedProperties.firstChild(name);
@@ -267,14 +323,37 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     }
 
     /**
-     * Overrides the default implementation to sync the schema with the current node.
+     * Overrides the default implementation to:
+     * <ul><li>sync the schema with the current node
+     * </li><li>handle unset properties
+     * </li><li>check collections
+     * </li><li>execute any check on the node iteself
+     * </li></ul>
      *
-     * @param parent
-     * @param node
+     * @param parent the parent node
+     * @param node the node that is being completed
      */
     protected void nodeCompleted(Object parent, Object node) {
-        SchemaNode childSchema = popSchema();
+        SchemaNode currentSchema = popSchema();
+        handleUnsetProperties(currentSchema, node);
+        checkCollections(currentSchema, node);
+        checkNode(currentSchema, node);
 
+        super.nodeCompleted(parent, node);
+    }
+
+    protected void checkCollections(SchemaNode currentSchema, Object node) {
+        SchemaNode collectionsSchema = getMergedCollections(currentSchema);
+        List collectionsList = collectionsSchema.children();
+        if(collectionsList == null) return;
+        
+        for(int i = 0; i < collectionsList.size(); i++) {
+            CollectionSchemaNode collectionSchema = (CollectionSchemaNode)collectionsList.get(i);
+            collectionSchema.checkSize(node);
+        }
+    }
+
+    protected void handleUnsetProperties(SchemaNode currentSchema, Object node) {
         // go through the unset properties and set defaults or check if req
         Map unsetProperties = new HashMap(getCurrentProperties()); // use copy to avoid ConcurrentModificationException
         for(Iterator properties = unsetProperties.entrySet().iterator(); properties.hasNext();) {
@@ -286,7 +365,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 if(value instanceof Closure) {
                     value = ((Closure)value).call();
                 }
-                setVariable(node, childSchema, (String)propertySchema.name(), value);
+                setVariable(node, currentSchema, (String)propertySchema.name(), value);
             }
             else {
                 Boolean req = (Boolean)attributes.get("req");
@@ -301,10 +380,8 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         // in case it was defined as a node and not as an attribute
         Map parentProperties = getCurrentProperties();
         if(parentProperties != null) {
-            parentProperties.remove(childSchema.name());
+            parentProperties.remove(currentSchema.name());
         }
-
-        super.nodeCompleted(parent, node);
     }
 
     /**
@@ -392,12 +469,21 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         return defaultFactory;
     }
 
+    /**
+     * Return a shallow set of merged properties by searching for all properties of schema and its parents, in a depth
+     * first manner.  This facilitates fast lookup of property attributes and tracking which properties
+     * have been set and which have not.
+     *
+     * @param schema the owner of the properties
+     * @return see above
+     */
     protected SchemaNode getMergedProperties(SchemaNode schema) {
         SchemaNode mergedProperties = (SchemaNode)schema.firstChild("mergedProperties");
+
         if(mergedProperties == null) {
-            SchemaNode properties = (SchemaNode)schema.firstChild("properties");
-            SchemaNode superSchema = (SchemaNode)resolveSchemaRef(schema.attribute("schema"));
             mergedProperties = new SchemaNode(schema, "mergedProperties");
+
+            SchemaNode superSchema = resolveSchemaRef(schema.attribute("schema"));
             if(superSchema != null) {
                 // add all of the super schema's properties first
                 SchemaNode superMergedProperties = getMergedProperties(superSchema);
@@ -406,6 +492,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                     new SchemaNode(mergedProperties, property.name(), property.attributes());
                 }
             }
+            SchemaNode properties = (SchemaNode)schema.firstChild("properties");
             if(properties != null) {
                 for(Iterator children = properties.children().iterator(); children.hasNext();) {
                     SchemaNode property = (SchemaNode)children.next();
@@ -422,6 +509,48 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             }
         }
         return mergedProperties;
+    }
+
+    /**
+     * Return a shallow set of merged collections by searching for all collections of schema and its parents, in a depth
+     * first manner.  This facilitates fast lookup of collection attributes and checking.
+     *
+     * @param schema the owner of the collections
+     * @return see above
+     */
+    protected SchemaNode getMergedCollections(SchemaNode schema) {
+        SchemaNode mergedCollections = (SchemaNode)schema.firstChild("mergedCollections");
+
+        if(mergedCollections == null) {
+            mergedCollections = new SchemaNode(schema, "mergedCollections");
+
+            SchemaNode superSchema = resolveSchemaRef(schema.attribute("schema"));
+            if(superSchema != null) {
+                // add all of the super schema's collections first
+                SchemaNode superMergedCollections = getMergedCollections(superSchema);
+                for(Iterator children = superMergedCollections.children().iterator(); children.hasNext();) {
+                    SchemaNode collection = (SchemaNode)children.next();
+                    new CollectionSchemaNode(mergedCollections, collection.name(), collection.attributes());
+                }
+            }
+
+            SchemaNode collections = (SchemaNode)schema.firstChild("collections");
+            if(collections != null) {
+                for(Iterator children = collections.children().iterator(); children.hasNext();) {
+                    SchemaNode collection = (SchemaNode)children.next();
+                    SchemaNode mergedCollection = (SchemaNode)mergedCollections.firstChild((String)collection.name());
+                    if(mergedCollection == null) {
+                        // simple copy
+                        new CollectionSchemaNode(mergedCollections, collection.name(), collection.attributes());
+                    }
+                    else {
+                        // overwrites previous attribute, if present
+                        mergedCollection.attributes().putAll(collection.attributes());
+                    }
+                }
+            }
+        }
+        return mergedCollections;
     }
 
     /**
@@ -442,21 +571,42 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     /**
      * Check <code>value</code> against a <code>propertySchema</code>'s <code>check</code> attribute, if it exists.
      *
-     * @param propertySchema see above
+     * @param schema see above
      * @param val the value
      */
-    protected void checkPropertyValue(SchemaNode propertySchema, Object val) {
-        if(propertySchema.attributes().containsKey("check") == false) return;
-        Object check = propertySchema.attribute("check");
+    protected void checkPropertyValue(SchemaNode schema, Object val) {
+        if(val == null || schema.attributes().containsKey("check") == false) return;
+        Object check = schema.attribute("check");
         boolean b = true;
         try {
             b =  ScriptBytecodeAdapter.isCase(val, check);
         }
         catch(Throwable t) {
-            throw MetaBuilder.createPropertyException((String)propertySchema.name(), t);
+            throw MetaBuilder.createPropertyException((String)schema.name(), t);
         }
         if(!b) {
-            throw MetaBuilder.createPropertyException((String)propertySchema.name(), "value invalid");
+            throw MetaBuilder.createPropertyException((String)schema.name(), "value invalid");
+        }
+    }
+
+    /**
+     * Execute check against <code>node</code>, if one exists.
+     *
+     * @param schema see above
+     * @param node the node
+     */
+    protected void checkNode(SchemaNode schema, Object node) {
+        if(node == null || schema.attributes().containsKey("check") == false) return;
+        Object check = schema.attribute("check");
+        boolean b = true;
+        try {
+            b =  ScriptBytecodeAdapter.isCase(node, check);
+        }
+        catch(Throwable t) {
+            throw MetaBuilder.createNodeException((String)schema.name(), t);
+        }
+        if(!b) {
+            throw MetaBuilder.createNodeException((String)schema.name(), "check failed");
         }
     }
 
@@ -529,11 +679,22 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @param child
      */
     protected void setParent(Object parent, Object child) {
-        FactoryBuilderSupport proxyBuilder = getProxyBuilder();
-        proxyBuilder.getCurrentFactory().setParent(this, parent, child);
-        Factory parentFactory = proxyBuilder.getParentFactory();
-        if(child instanceof CollectionSchemaNode == false && parentFactory != null) {
+        SchemaNode currentSchema = getCurrentSchema();
+        SchemaNode parentSchema = (SchemaNode)currentSchema.parent();
+        if(parent != parentSchema && parentSchema instanceof CollectionSchemaNode) {
+            // This section is needed in case a collection member was used outside of a collection
+            Factory parentFactory = (Factory)parentSchema;
+            parentFactory.setParent(this, parent, child);
             parentFactory.setChild(this, parent, child);
+        }
+        else {
+            FactoryBuilderSupport proxyBuilder = getProxyBuilder();
+            Factory currentFactory = proxyBuilder.getCurrentFactory();
+            currentFactory.setParent(this, parent, child);
+            Factory parentFactory = proxyBuilder.getParentFactory();
+            if(child instanceof CollectionSchemaNode == false && parentFactory != null) {
+                parentFactory.setChild(this, parent, child);
+            }
         }
     }
 }

@@ -75,10 +75,8 @@ def panelSchema = mb.define {
 def aContainer = mb.build {
     container(name: 'aContainer', parentAssocRef: 'someParent', border: true) {
         title = mb.build { label(name: 'titleLabel') }
-        components {
-            label(name: 'label2')
-            panel(name: 'panel1')
-        }
+        label(name: 'label2')
+        panel(name: 'panel1')
     }
 }
 println aContainer

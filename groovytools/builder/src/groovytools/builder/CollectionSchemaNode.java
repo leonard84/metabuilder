@@ -65,7 +65,6 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
     }
 
     public void onNodeCompleted(FactoryBuilderSupport builder, Object parent, Object node) {
-        checkSize(parent);
     }
 
     public void setParent(FactoryBuilderSupport builder, Object parent, Object child) {
@@ -351,5 +350,11 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
 
     public boolean onNodeChildren(FactoryBuilderSupport builder, Object node, Closure childContent) {
         return false;
+    }
+
+    public SchemaNode deepCopy() {
+        SchemaNode copy = new CollectionSchemaNode(null, name(), new HashMap(attributes()));
+        deepCopyChildren(copy);
+        return copy;
     }
 }
