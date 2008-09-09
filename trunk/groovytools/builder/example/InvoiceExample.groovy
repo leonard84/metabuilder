@@ -145,13 +145,11 @@ mb.define {
 
 def anInvoice02 = mb.build {
     invoice02 {
-        items {
-            item(upc: 123, qty: 1, price: 14.99)
-            item(upc: 234, qty: 4, price: 14.99)
-            item(upc: 345, qty: 6, price: 14.99)
-        }
-        payments {
-            payment(amt: 10)
-        }
+        item(upc: 123, qty: 1, price: 14.99)
+        item(upc: 234, qty: 4, price: 14.99)
+        item(upc: 345, qty: 6, price: 14.99)
+        payment(amt: 10)
     }
 }
+
+println(anInvoice02)

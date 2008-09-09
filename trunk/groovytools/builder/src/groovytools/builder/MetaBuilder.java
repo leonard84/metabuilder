@@ -95,6 +95,7 @@ import java.io.*;
  *     properties() {
  *         schema(check: nullOrStringOrSchemaNode )
  *         factory(check: nullOrStringOrClassOrFactoryOrClosure )
+ *         check()
  *     }
  *     collections() {
  *         collections(factory: schemaNodeFactory) {
@@ -114,7 +115,6 @@ import java.io.*;
  *             '%'(schema: metaSchema)
  *                 properties() {
  *                     property(check: nullOrStringOrClosure)
- *                     check(check: nullOrClosure)
  *                     req(check: nullOrBoolean)
  *                     def()
  *                     min()
@@ -122,6 +122,7 @@ import java.io.*;
  *                     // Inherited from metaSchema:
  *                     // schema()
  *                     // factory()
+ *                     // check()
  *                 }
  *             }
  *         }
@@ -170,6 +171,17 @@ import java.io.*;
  *    <li><code>a</code> is a map of the node's attributes (may be empty)</li>
  *   <ul>
  *  </td>
+ * </tr>
+ * <tr>
+ *  <td><code>check</code></td>
+ *  <td>Used to specify a check on the value of the property, which will result in an exception if the check fails.  Optional.</td>
+ *  <td colspan='4'>Any object or literal.  The result of the check is logically equivalent to the result of executing the Groovy switch:
+ * <pre>
+ *     switch(value) {
+ *         case check: return true
+ *     }
+ *     return false
+ * </pre>
  * </tr>
  * <tr>
  *  <td>collection</td>
@@ -294,17 +306,6 @@ import java.io.*;
  *  <td>n/a</td>
  *  <td>n/a</td>
  *  <td>n/a</td>
- * </tr>
- * <tr>
- *  <td><code>check</code></td>
- *  <td>Used to specify a check on the value of the property, which will result in an exception if the check fails.  Optional.</td>
- *  <td colspan='4'>Any object or literal.  The result of the check is logically equivalent to the result of executing the Groovy switch:
- * <pre>
- *     switch(value) {
- *         case check: return true
- *     }
- *     return false
- * </pre>
  * </tr>
  * <tr>
  *  <td><code>req</code></td>
@@ -491,6 +492,7 @@ public class MetaBuilder extends Binding {
 
         SchemaNode propertiesMetaSchema = new SchemaNode(metaSchema, "properties");
         propertiesMetaSchema.attributes().put("factory", schemaNodeFactory);
+        SchemaNode checkNode = new SchemaNode(propertiesMetaSchema, "check");
         SchemaNode schemaNode = new SchemaNode(propertiesMetaSchema, "schema");
         schemaNode.attributes().put("check", nullOrStringOrSchemaNode);
         SchemaNode factoryNode = new SchemaNode(propertiesMetaSchema, "factory");
@@ -532,7 +534,6 @@ public class MetaBuilder extends Binding {
         reqNode.attributes().put("check", nullOrBoolean);
         SchemaNode defNode = new SchemaNode(propertiesElementSchemaProperties, "def");
         // no check needed for defa
-        SchemaNode checkNode = new SchemaNode(propertiesElementSchemaProperties, "check");
         SchemaNode minNode = new SchemaNode(propertiesElementSchemaProperties, "min");
         SchemaNode maxNode = new SchemaNode(propertiesElementSchemaProperties, "max");
 
@@ -676,6 +677,16 @@ public class MetaBuilder extends Binding {
      */
     public void setClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader instanceof GroovyClassLoader ? (GroovyClassLoader)classLoader : new GroovyClassLoader(classLoader);
+    }
+
+    public static RuntimeException createNodeException(String name, String error) {
+        StringBuilder message = new StringBuilder("Node '").append(name).append("': ").append(error);
+        return new NodeException(message.toString());
+    }
+
+    public static RuntimeException createNodeException(String name, Throwable error) {
+        StringBuilder message = new StringBuilder("Node '").append(name).append("': ").append(error);
+        return new NodeException(message.toString(), error);
     }
 
     public static RuntimeException createPropertyException(String name, String error) {

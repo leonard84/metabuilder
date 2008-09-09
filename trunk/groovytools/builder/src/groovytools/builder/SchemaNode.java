@@ -113,4 +113,17 @@ public class SchemaNode extends Node {
         }
         return null;
     }
+
+    public SchemaNode deepCopy() {
+        SchemaNode copy = new SchemaNode(null, name(), new HashMap(attributes()));
+        deepCopyChildren(copy);
+        return copy;
+    }
+
+    protected void deepCopyChildren(SchemaNode copy) {
+        for(int i = 0; i < children().size(); i++) {
+            SchemaNode child = (SchemaNode)children().get(i);
+            copy.appendNode(child.deepCopy());
+        }
+    }
 }

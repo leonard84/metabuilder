@@ -47,11 +47,9 @@ class ClassGeneratingMetaBuilder extends MetaBuilder {
 
             def invoiceNodes = mb.build {
                 invoice(date: invoiceDate) {
-                    items {
-                        item(upc: 123, qty: 1, price: 14.99)
-                        item(upc: 234, qty: 4, price: 14.99)
-                        item(upc: 345, qty: 6, price: 14.99)
-                    }
+                    item(upc: 123, qty: 1, price: 14.99)
+                    item(upc: 234, qty: 4, price: 14.99)
+                    item(upc: 345, qty: 6, price: 14.99)
                 }
             }
 
