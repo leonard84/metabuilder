@@ -41,7 +41,14 @@ class ExpandoGeneratingMetaBuilder extends MetaBuilder {
 
             def invoiceDate = new Date()
 
-            def invoiceNodes = mb.build {
+            def invoiceNodes = mb.buildList {
+                invoice(date: invoiceDate) {
+                    items {
+                        item(upc: 123, qty: 1, price: 14.99)
+                        item(upc: 234, qty: 4, price: 14.99)
+                        item(upc: 345, qty: 6, price: 14.99)
+                    }
+                }
                 invoice(date: invoiceDate) {
                     items {
                         item(upc: 123, qty: 1, price: 14.99)
