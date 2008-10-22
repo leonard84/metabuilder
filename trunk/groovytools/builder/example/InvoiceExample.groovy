@@ -38,7 +38,7 @@ def invoiceDef = mb.define {
             }
         }
     }
-} 
+}
 
 def anInvoice = mb.build {
     invoice(date: new Date()) {

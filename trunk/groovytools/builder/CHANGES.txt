@@ -1,3 +1,9 @@
+1.1.2
+-----
+* By request, now built targetting JDK 1.5.
+* Added buildList, which returns you a list of objects from you build script,
+  rather than just the last.
+
 1.1.1
 -----
 * Now implementing check to be equivalent to:
@@ -6,7 +12,7 @@
     }
     return false
   This means you can now use Closures, Patterns, Classes, Numbers, Strings, 
-  Ranges, and Collections for your check.
+  Ranges, and Collections for your checks.
 
 1.1.0
 -----
