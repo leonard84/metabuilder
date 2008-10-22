@@ -24,7 +24,7 @@
 	<property environment="env"/>
 
 	<property name="name" value="groovytools-builder" />
-	<property name="version" value="1.1.1" />
+	<property name="version" value="1.1.2" />
 
 	<path id="build.classpath">
 		<pathelement path="src"/>
@@ -89,7 +89,7 @@
 
 	<target name="compile" depends="properties">
 		<mkdir dir="build/classes"/>
-		<javac destdir="${javac.dest.dir}" includeAntRuntime="false" debug="${javac.debug}" optimize="${javac.optimize}" srcDir="${javac.src.dir}">
+		<javac destdir="${javac.dest.dir}" target="1.5" includeAntRuntime="false" debug="${javac.debug}" optimize="${javac.optimize}" srcDir="${javac.src.dir}">
 			<classpath refid="build.classpath" />
 		</javac>
 	</target>
