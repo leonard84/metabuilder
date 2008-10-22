@@ -590,6 +590,16 @@ public class MetaBuilder extends Binding {
         return schema;
     }
 
+    public List buildList(Closure c) {
+        MetaObjectGraphBuilder graphBuilder = createMetaObjectGraphBuilder(null, defaultBuildNodeFactory);
+        ArrayList buildList = new ArrayList();
+        graphBuilder.setBuildList(buildList);
+        c.setDelegate(graphBuilder);
+        c.setResolveStrategy(Closure.DELEGATE_FIRST);
+        c.call();
+        return buildList;
+    }
+
     public Object build(Class viewClass) {
         if (Script.class.isAssignableFrom(viewClass)) {
             Script script = InvokerHelper.createScript(viewClass, this);
@@ -599,8 +609,21 @@ public class MetaBuilder extends Binding {
         }
     }
 
+    public List buildList(Class viewClass) {
+        if (Script.class.isAssignableFrom(viewClass)) {
+            Script script = InvokerHelper.createScript(viewClass, this);
+            return buildList(script);
+        } else {
+            throw new RuntimeException("Only scripts can be executed via build(Class)");
+        }
+    }
+
     public Object build(URL url) throws IOException {
         return build(classLoader.parseClass(url.openStream()));
+    }
+
+    public List buildList(URL url) throws IOException {
+        return buildList(classLoader.parseClass(url.openStream()));
     }
 
     public Object build(Script script) {
@@ -611,6 +634,23 @@ public class MetaBuilder extends Binding {
                 script.setMetaClass(new FactoryInterceptorMetaClass(scriptMetaClass, metaObjectGraphBuilder));
                 script.setBinding(this);
                 return script.run();
+            } finally {
+                script.setMetaClass(scriptMetaClass);
+            }
+        }
+    }
+
+    public List buildList(Script script) {
+        synchronized (script) {
+            MetaClass scriptMetaClass = script.getMetaClass();
+            try {
+                MetaObjectGraphBuilder metaObjectGraphBuilder = createMetaObjectGraphBuilder(null, defaultBuildNodeFactory);
+                ArrayList buildList = new ArrayList();
+                metaObjectGraphBuilder.setBuildList(buildList);
+                script.setMetaClass(new FactoryInterceptorMetaClass(scriptMetaClass, metaObjectGraphBuilder));
+                script.setBinding(this);
+                script.run();
+                return buildList;
             } finally {
                 script.setMetaClass(scriptMetaClass);
             }
@@ -811,4 +851,5 @@ public class MetaBuilder extends Binding {
                 }
             }
         }
-    }}
+    }
+}

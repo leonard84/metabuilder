@@ -56,6 +56,11 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     private Factory defaultFactory;
 
     /**
+     * Result list when calling {@link #buildList}.
+     */
+    private List buildList;
+
+    /**
      * Constructs a {@link MetaObjectGraphBuilder}.
      *
      * @param metaBuilder the {@link MetaBuilder} providing the build context
@@ -86,15 +91,15 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             SchemaNode propertySchema = (SchemaNode)propertiesList.get(i);
             propertiesMap.put(propertySchema.name(), propertySchema);
         }
-        propertiesStack.push(propertiesMap);
+        propertiesStack.addFirst(propertiesMap);
     }
 
     public void pushProperties(Map properties) {
-        propertiesStack.push(properties);
+        propertiesStack.addFirst(properties);
     }
 
     public Map popProperties() {
-        return (Map)propertiesStack.pop();
+        return (Map)propertiesStack.removeFirst();
     }
 
     public Map getCurrentProperties() {
@@ -102,11 +107,11 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     }
 
     public void pushSchema(SchemaNode schema) {
-        schemaStack.push(schema);
+        schemaStack.addFirst(schema);
     }
 
     public SchemaNode popSchema() {
-        return (SchemaNode)schemaStack.pop();
+        return (SchemaNode)schemaStack.removeFirst();
     }
 
     public SchemaNode getCurrentSchema() {
@@ -194,6 +199,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      */
     protected Object createNode(Object name, Map attributes, Object value) {
         String childSchemaName = (String)name;
+        Object current = getCurrent();
         // MetaObjectGraphBuilder bascially works by matching name against a child node of the current schema.
         SchemaNode currentSchema = getCurrentSchema();
         SchemaNode childSchema = null;
@@ -205,35 +211,37 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             // If we can't find a schema using the root node's name, try using the default schema
             childSchema = defaultSchema;
         }
-        else if(getCurrent() == null) {
-            // No current node exists, see if the  schema supports any name
-            String rootName = (String)currentSchema.name();
-            if(!rootName.equals(childSchemaName) && !rootName.equals("%")) {
-                throw new IllegalArgumentException(childSchemaName);
-            }
-            childSchema = currentSchema;
-        }
         else {
-            // search for a property
-            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", childSchemaName);
+            if(current == null) {
+                // No current node exists, see if the  schema supports any name
+                String rootName = (String)currentSchema.name();
+                if(!rootName.equals(childSchemaName) && !rootName.equals("%")) {
+                    throw new IllegalArgumentException(childSchemaName);
+                }
+                childSchema = currentSchema;
+            }
+            else {
+                // search for a property
+                childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", childSchemaName);
 
-            // search for a named collection
-            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", childSchemaName);
+                // search for a named collection
+                childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", childSchemaName);
 
-            // search for a collection member (current schema is a collection node)
-            childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild(childSchemaName);
+                // search for a collection member (current schema is a collection node)
+                childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild(childSchemaName);
 
-            // search all collections for a named collection member
-            childSchema = childSchema != null ? childSchema : findCollectionSchema(currentSchema, childSchemaName);
+                // search all collections for a named collection member
+                childSchema = childSchema != null ? childSchema : findCollectionSchema(currentSchema, childSchemaName);
 
-            // search for an unnamed property
-            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", "%");
+                // search for an unnamed property
+                childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", "%");
 
-            // search for an unnamed collection
-            childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", "%");
+                // search for an unnamed collection
+                childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", "%");
 
-            // search for an unamed schema node
-            childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild("%");
+                // search for an unamed schema node
+                childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild("%");
+            }
         }
         if(childSchema == null) {
             throw MetaBuilder.createSchemaNotFoundException(childSchemaName);
@@ -264,6 +272,9 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         if(currentSchema == null) {
             // will only be null if defining a top level schema
             metaBuilder.addSchema(childSchemaName, node);
+        }
+        if(current == null && buildList != null) {
+            buildList.add(node);
         }
 
         return node;
@@ -346,7 +357,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         SchemaNode collectionsSchema = getMergedCollections(currentSchema);
         List collectionsList = collectionsSchema.children();
         if(collectionsList == null) return;
-        
+
         for(int i = 0; i < collectionsList.size(); i++) {
             CollectionSchemaNode collectionSchema = (CollectionSchemaNode)collectionsList.get(i);
             collectionSchema.checkSize(node);
@@ -696,5 +707,13 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 parentFactory.setChild(this, parent, child);
             }
         }
+    }
+
+    public List getBuildList() {
+        return buildList;
+    }
+
+    public void setBuildList(List buildList) {
+        this.buildList = buildList;
     }
 }
