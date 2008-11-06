@@ -272,11 +272,11 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         return size;
     }
 
-    public void checkSize(Object parent) {
+    public void checkSize(Object collectionParent) {
         Integer min = (Integer)attribute("min");
         Integer max = (Integer)attribute("max");
-        
-        if(min == null || max == null) return;
+
+        if(min == null && max == null) return;
 
         Object sizeAttr = attribute("size");
         Integer size = null;
@@ -284,7 +284,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         try {
             // If there is an size attribute, use it
             if(sizeAttr != null) {
-                size = (Integer)size(sizeAttr, parent);
+                size = (Integer)size(sizeAttr, collectionParent);
             }
             else {
                 Object collectionAttr = attribute("collection");
@@ -296,21 +296,21 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
 
                 if(collectionAttr instanceof Closure) {
                     Closure collectionClosure = (Closure)collectionAttr;
-                    property = collectionClosure.call(parentBean);
+                    property = collectionClosure.call(collectionParent);
                 }
                 else if(collectionAttr instanceof String) {
                     // Special handling when both parent and child are SchemaNodes.
                     // Can't use an 'add' Closure since that would affect non-SchemaNode types, by default.
                     // Place here so that any 'add' or 'collection' Closures specified have the first chance
                     // to override this behavior.
-                    if(parentBean instanceof SchemaNode) {
-                        SchemaNode parentNode = (SchemaNode)parentBean;
+                    if(collectionParent instanceof SchemaNode) {
+                        SchemaNode parentNode = (SchemaNode)collectionParent;
                         NodeList nodeList = (NodeList)parentNode.get((String)collectionAttr);
                         SchemaNode collectionNode = (SchemaNode)nodeList.get(0);
                         property = collectionNode.children();
                     }
                     else {
-                        property = InvokerHelper.getProperty(parentBean, (String)collectionAttr);
+                        property = InvokerHelper.getProperty(collectionParent, (String)collectionAttr);
                     }
                 }
 

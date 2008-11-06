@@ -4,19 +4,17 @@
  * @author didge
  * @version $Id$
  */
-invoice {
+order (factory: Order) {
+    properties {
+        id(req: true)
+    }
     collections {
-        items {
-            item {
+        lines {
+            line(factory: OrderLine) {
                 properties {
+                    upc(req: true)
                     qty(req: true)
-                }
-            }
-        }
-        payments {
-            payment {
-                properties {
-                    amt(req: true)
+                    price(req: true)
                 }
             }
         }

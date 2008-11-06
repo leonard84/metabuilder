@@ -22,7 +22,7 @@ class CollectionAttributesTest extends GroovyTestCase {
                     listOfChildrenAsProperty(property: 'listOfChildren')
                 }
                 collections {
-                    listOfChildren (min: 1 ) { // simple example of a collection of child objects
+                    listOfChildren (min: 6 ) { // simple example of a collection of child objects
                         child(schema: 'child')
                     }
                     listOfChildren2(collection: "listOfChildren") { // uses the collection above
@@ -62,7 +62,7 @@ class CollectionAttributesTest extends GroovyTestCase {
         def parent1 = mb.build {
             parent (name: 'Lists of Children', listOfChildrenAsProperty: ['Jeb', 'Job']) {
                 listOfChildren {
-                    child(name: 'Jay')
+      //              child(name: 'Jay')
                 }
                 listOfChildren2 {
                     child(name: 'Jan')
@@ -91,7 +91,7 @@ class CollectionAttributesTest extends GroovyTestCase {
             }
         }
 
-        assertEquals(6, parent1.listOfChildren.size())
+        //assertEquals(6, parent1.listOfChildren.size())
         assertEquals(5, parent1.mapOfChildren.size())
     }
 

@@ -1,3 +1,9 @@
+1.1.3
+-----
+* Fixed bug whereby the min and max attributes of collections were not being
+  respected.
+* Added ability to pass a build visitor, which is a closure that you can
+  provide to MetaBuilder and for which will be 
 1.1.2
 -----
 * By request, now built targetting JDK 1.5.
@@ -11,12 +17,12 @@
       case check: return true
     }
     return false
-  This means you can now use Closures, Patterns, Classes, Numbers, Strings, 
+  This means you can now use Closures, Patterns, Classes, Numbers, Strings,
   Ranges, and Collections for your checks.
 
 1.1.0
 -----
-* Fixed how extended properties were resolved. 
+* Fixed how extended properties were resolved.
 * Created a better scheme for processing def and req properties.
 * Added support for min and max properties on collections and properties.
 * Added ability to specify property values with = (like ConfigSlurper).
@@ -26,7 +32,7 @@
 * Added ExpandoGeneratingMetaBuilder example.
 * Added ClassGeneratingMetaBuilder example.
 * Added new URL method versions of build() and define() to MetaBuilder.
-* Added Pattern as a supported type for check properties.  
+* Added Pattern as a supported type for check properties.
 
 1.0.1
 -----
