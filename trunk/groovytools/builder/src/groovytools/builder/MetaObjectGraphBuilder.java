@@ -56,9 +56,9 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     private Factory defaultFactory;
 
     /**
-     * Result list when calling {@link #buildList}.
+     * If set, called after each node is created.
      */
-    private List buildList;
+    private Closure objectVisitor;
 
     /**
      * Constructs a {@link MetaObjectGraphBuilder}.
@@ -68,12 +68,25 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @param defaultFactory
      */
     public MetaObjectGraphBuilder(MetaBuilder metaBuilder, SchemaNode defaultSchema, Factory defaultFactory) {
+        this(metaBuilder, defaultSchema, defaultFactory, null);
+    }
+
+    /**
+     * Constructs a {@link MetaObjectGraphBuilder}.
+     *
+     * @param metaBuilder the {@link MetaBuilder} providing the build context
+     * @param defaultSchema
+     * @param defaultFactory
+     * @param objectVisitor
+     */
+    public MetaObjectGraphBuilder(MetaBuilder metaBuilder, SchemaNode defaultSchema, Factory defaultFactory, Closure objectVisitor) {
         super();
         this.metaBuilder = metaBuilder;
         schemaStack = new LinkedList();
         propertiesStack = new LinkedList();
         this.defaultSchema = defaultSchema;
         this.defaultFactory = defaultFactory;
+        this.objectVisitor = objectVisitor;
 
         setClassNameResolver(createClassNameResolver());
         setClassLoader(metaBuilder.getClassLoader());
@@ -116,6 +129,14 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 
     public SchemaNode getCurrentSchema() {
         return (SchemaNode)schemaStack.peek();
+    }
+
+    public Closure getObjectVisitor() {
+        return objectVisitor;
+    }
+
+    public void setObjectVisitor(Closure objectVisitor) {
+        this.objectVisitor = objectVisitor;
     }
 
     /**
@@ -269,12 +290,10 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             }
             else throw e;
         }
-        if(currentSchema == null) {
-            // will only be null if defining a top level schema
-            metaBuilder.addSchema(childSchemaName, node);
-        }
-        if(current == null && buildList != null) {
-            buildList.add(node);
+        
+        if(objectVisitor != null) {
+            CreateNodeEvent e = new CreateNodeEvent(childSchemaName, node, current);
+            node = objectVisitor.call(e);
         }
 
         return node;
@@ -707,13 +726,5 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 parentFactory.setChild(this, parent, child);
             }
         }
-    }
-
-    public List getBuildList() {
-        return buildList;
-    }
-
-    public void setBuildList(List buildList) {
-        this.buildList = buildList;
     }
 }

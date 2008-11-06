@@ -2,70 +2,35 @@ import com.seventytwomiles.architecturerules.configuration.*
 import com.seventytwomiles.architecturerules.domain.*
 import groovytools.builder.*
 
-/**
- */
-MetaBuilder mb = new MetaBuilder()
-
-mb.define {
-    architecture(factory: Configuration) {
-        properties {
-            doCyclicDependencyTest(def: true)
-            throwExceptionWhenNoPackages(def: true)
-        }
-        collections {
-            sources {
-                source(factory: SourceDirectory) {
-                    properties {
-                        path()
-                        notFound(def: 'exception')
-                    }
-                }
-            }
-            rules {
-                rule(factory: Rule) {
-                    properties {
-                        id()
-                        comment()
-                    }
-                    collections {
-                        packages(add: 'addPackage') {
-                            'package'(factory: {n, v -> v })
-                        }
-                        violations(add: {p, c -> p.addViolation(c) }) {
-                            violation(factory: {n, v -> new JPackage(v)})
-                        }
-                    }
-                }
-            }
-        }
+architecture(factory: Configuration) {
+    properties {
+        doCyclicDependencyTest(def: true)
+        throwExceptionWhenNoPackages(def: true)
     }
-}
-
-Configuration c = (Configuration) mb.build {
-    architecture {
+    collections {
         sources {
-            source(path: "spring.jar")
-        }
-
-        rules {
-            rule(id: "beans-web", comment: "org.springframework.beans.factory cannot depend on org.springframework.web") {
-                packages {
-                    'package'('org.springframework.beans')
-                }
-                violations {
-                    violation('org.springframework.web')
+            jar(factory: { n, v -> new SourceDirectory(v) }) {
+                properties {
+                    notFound(def: 'exception')
                 }
             }
-
-            rule(id: 'must-fail', comment: "org.springframework.orm.hibernate3 cannot depend on org.springframework.core.io") {
-                packages {
-                    'package'('org.springframework.orm.hibernate3')
+        }
+        rules {
+            '%' (factory: { n -> new Rule(n) } ) {
+                properties {
+                    id()
+                    comment()
                 }
-                violations {
-                    violation('org.springframework.core.io')
+                collections {
+                    packages(add: 'addPackage', min: 1) {
+                        'package'(factory: {n, v -> v })
+                    }
+                    violations(add: {p, c -> p.addViolation(c) }, min: 1) {
+                        violation(factory: {n, v -> new JPackage(v)})
+                    }
                 }
             }
         }
     }
 }
-println(c)
+
