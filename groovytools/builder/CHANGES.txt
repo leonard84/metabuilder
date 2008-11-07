@@ -3,7 +3,8 @@
 * Fixed bug whereby the min and max attributes of collections were not being
   respected.
 * Added ability to pass a build visitor, which is a closure that you can
-  provide to MetaBuilder and for which will be 
+  provide to MetaBuilder and for which will be
+  
 1.1.2
 -----
 * By request, now built targetting JDK 1.5.
