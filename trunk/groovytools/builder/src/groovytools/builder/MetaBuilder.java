@@ -359,7 +359,7 @@ import java.io.*;
  * @author didge
  * @version $Id$
  */
-public class MetaBuilder extends Binding {
+public class MetaBuilder {
     private Map schemas;
     private SchemaNode defaultMetaSchema;
     private GroovyClassLoader classLoader;
@@ -594,7 +594,7 @@ public class MetaBuilder extends Binding {
 
     public Object define(Class viewClass) {
         if (Script.class.isAssignableFrom(viewClass)) {
-            Script script = InvokerHelper.createScript(viewClass, this);
+            Script script = InvokerHelper.createScript(viewClass, new Binding());
             return define(script);
         } else {
             throw new RuntimeException("Only scripts can be executed via build(Class)");
@@ -607,7 +607,7 @@ public class MetaBuilder extends Binding {
             try {
                 MetaObjectGraphBuilder metaObjectGraphBuilder = createMetaObjectGraphBuilder(defaultMetaSchema, defaultDefineNodeFactory, new SchemaAdder());
                 script.setMetaClass(new FactoryInterceptorMetaClass(scriptMetaClass, metaObjectGraphBuilder));
-                script.setBinding(this);
+                script.setBinding(metaObjectGraphBuilder);
                 return script.run();
             } finally {
                 script.setMetaClass(scriptMetaClass);
@@ -616,10 +616,6 @@ public class MetaBuilder extends Binding {
     }
 
     public Object define(URL url) throws IOException {
-        return define(classLoader.parseClass(url.openStream()));
-    }
-
-    public Object define(Closure objectVisitor, URL url) throws IOException {
         return define(classLoader.parseClass(url.openStream()));
     }
 
@@ -656,7 +652,7 @@ public class MetaBuilder extends Binding {
      */
     public Object build(Closure objectVisitor, Class viewClass) {
         if (Script.class.isAssignableFrom(viewClass)) {
-            Script script = InvokerHelper.createScript(viewClass, this);
+            Script script = InvokerHelper.createScript(viewClass, new Binding());
             return build(objectVisitor, script);
         } else {
             throw new RuntimeException("Only scripts can be executed via build(Class)");
@@ -665,7 +661,7 @@ public class MetaBuilder extends Binding {
 
     public List buildList(Class viewClass) {
         if (Script.class.isAssignableFrom(viewClass)) {
-            Script script = InvokerHelper.createScript(viewClass, this);
+            Script script = InvokerHelper.createScript(viewClass, new Binding());
             return buildList(script);
         } else {
             throw new RuntimeException("Only scripts can be executed via build(Class)");
@@ -694,7 +690,7 @@ public class MetaBuilder extends Binding {
             try {
                 MetaObjectGraphBuilder metaObjectGraphBuilder = createMetaObjectGraphBuilder(null, defaultBuildNodeFactory, objectVisitor);
                 script.setMetaClass(new FactoryInterceptorMetaClass(scriptMetaClass, metaObjectGraphBuilder));
-                script.setBinding(this);
+                script.setBinding(metaObjectGraphBuilder);
                 return script.run();
             } finally {
                 script.setMetaClass(scriptMetaClass);
@@ -709,7 +705,7 @@ public class MetaBuilder extends Binding {
                 ListBuilder listBuilder = new ListBuilder();
                 MetaObjectGraphBuilder metaObjectGraphBuilder = createMetaObjectGraphBuilder(null, defaultBuildNodeFactory, listBuilder);
                 script.setMetaClass(new FactoryInterceptorMetaClass(scriptMetaClass, metaObjectGraphBuilder));
-                script.setBinding(this);
+                script.setBinding(metaObjectGraphBuilder);
                 script.run();
                 return listBuilder.getList();
             } finally {
@@ -871,6 +867,32 @@ public class MetaBuilder extends Binding {
         public FactoryInterceptorMetaClass(MetaClass delegate, FactoryBuilderSupport factory) {
             super(delegate);
             this.factory = factory;
+        }
+
+        /* (non-Javadoc)
+            * @see groovy.lang.MetaClass#setProperty(java.lang.Object, java.lang.String, java.lang.Object)
+            */
+        public void setProperty(Object object, String property, Object newValue) {
+            super.setProperty(object, property, newValue);
+        }
+
+        public void setProperty(String property, Object newValue) {
+            super.setProperty(property, newValue);
+        }
+
+        public void setProperty(Class sender, Object receiver, String messageName, Object messageValue, boolean useSuper, boolean fromInsideClass) {
+            super.setProperty(sender, receiver, messageName, messageValue, useSuper, fromInsideClass);
+        }
+
+        /* (non-Javadoc)
+        * @see groovy.lang.MetaClass#setAttribute(java.lang.Object, java.lang.String, java.lang.Object)
+        */
+        public void setAttribute(Object object, String attribute, Object newValue) {
+            super.setAttribute(object, attribute, newValue);
+        }
+
+        public void setAttribute(Class sender, Object receiver, String messageName, Object messageValue, boolean useSuper, boolean fromInsideClass) {
+            super.setAttribute(sender, receiver, messageName, messageValue, useSuper, fromInsideClass);
         }
 
         public Object invokeMethod(Object object, String methodName, Object arguments) {

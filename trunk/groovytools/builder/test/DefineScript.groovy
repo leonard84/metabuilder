@@ -9,7 +9,7 @@ order (factory: Order) {
         id(req: true)
     }
     collections {
-        lines {
+        lines (min: 1, max: 4) {
             line(factory: OrderLine) {
                 properties {
                     upc(req: true)
