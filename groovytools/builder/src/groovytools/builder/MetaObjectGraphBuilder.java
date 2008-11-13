@@ -227,8 +227,12 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         if(currentSchema == null) {
             // If there is no current schema, its because the builder is building the root node.
             currentSchema = metaBuilder.getSchema(childSchemaName);
+            // Can't find a schema?  Check for wild card schema:
+            if(currentSchema == null) {
+                currentSchema = metaBuilder.getSchema("%");
+            }
         }
-        if(currentSchema == null) {
+        if(currentSchema == null && defaultSchema != null) {
             // If we can't find a schema using the root node's name, try using the default schema
             childSchema = defaultSchema;
         }
@@ -290,7 +294,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             }
             else throw e;
         }
-        
+
         if(objectVisitor != null) {
             CreateNodeEvent e = new CreateNodeEvent(childSchemaName, node, current);
             node = objectVisitor.call(e);
@@ -311,6 +315,8 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     public void setVariable(String name, Object value) {
         setVariable(getCurrent(), getCurrentSchema(), name, value);
     }
+
+    
 
     /**
      * Sets the given node's property value by name referencing the given schema.
