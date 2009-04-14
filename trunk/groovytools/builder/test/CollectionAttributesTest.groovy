@@ -62,7 +62,7 @@ class CollectionAttributesTest extends GroovyTestCase {
         def parent1 = mb.build {
             parent (name: 'Lists of Children', listOfChildrenAsProperty: ['Jeb', 'Job']) {
                 listOfChildren {
-      //              child(name: 'Jay')
+                    child(name: 'Jay')
                 }
                 listOfChildren2 {
                     child(name: 'Jan')
