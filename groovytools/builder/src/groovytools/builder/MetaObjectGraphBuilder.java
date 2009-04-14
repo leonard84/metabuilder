@@ -176,26 +176,34 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         return childSchema;
     }
 
-    protected SchemaNode findCollectionSchema(SchemaNode parentSchema, String name) {
+    protected SchemaNode findCollectionSchema(SchemaNode parentSchema, String containerName, String name) {
         SchemaNode result = null;
-        SchemaNode collectionsSchema = (SchemaNode)parentSchema.firstChild("collections");
+        SchemaNode collectionsSchema = (SchemaNode)parentSchema.firstChild(containerName);
         List collectionList = collectionsSchema != null ? collectionsSchema.children() : null;
-        if(collectionList == null) return null;
-        for(int i = 0; i < collectionList.size(); i++) {
-            Object o = collectionList.get(i);
-            if(o instanceof SchemaNode == false) continue;
-            SchemaNode collectionSchema = (SchemaNode)o;
-            result = (SchemaNode)collectionSchema.firstChild(name);
-
-            if(result == null) {
-                // Search super schemas for name
-                Object extendSchemaRef = collectionSchema.attribute("schema");
-                SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
-                if(extendSchema != null) {
-                    result = findCollectionSchema(extendSchema, name);
-                }
+        if(collectionList == null) {
+            Object extendSchemaRef = parentSchema.attribute("schema");
+            SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
+            if(extendSchema != null) {
+                result = findCollectionSchema(extendSchema, containerName, name);
             }
-            if(result != null) break;
+        }
+        else {
+            for(int i = 0; i < collectionList.size(); i++) {
+                Object o = collectionList.get(i);
+                if(o instanceof SchemaNode == false) continue;
+                SchemaNode collectionSchema = (SchemaNode)o;
+                result = (SchemaNode)collectionSchema.firstChild(name);
+
+                if(result == null) {
+                    // Search super schemas for name
+                    Object extendSchemaRef = collectionSchema.attribute("schema");
+                    SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
+                    if(extendSchema != null) {
+                        result = findCollectionSchema(extendSchema, containerName, name);
+                    }
+                }
+                if(result != null) break;
+            }
         }
         return result;
     }
@@ -221,7 +229,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     protected Object createNode(Object name, Map attributes, Object value) {
         String childSchemaName = (String)name;
         Object current = getCurrent();
-        // MetaObjectGraphBuilder bascially works by matching name against a child node of the current schema.
+        // MetaObjectGraphBuilder basically works by matching name against a child node of the current schema.
         SchemaNode currentSchema = getCurrentSchema();
         SchemaNode childSchema = null;
         if(currentSchema == null) {
@@ -256,7 +264,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild(childSchemaName);
 
                 // search all collections for a named collection member
-                childSchema = childSchema != null ? childSchema : findCollectionSchema(currentSchema, childSchemaName);
+                childSchema = childSchema != null ? childSchema : findCollectionSchema(currentSchema, "collections", childSchemaName);
 
                 // search for an unnamed property
                 childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "properties", "%");
@@ -264,7 +272,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 // search for an unnamed collection
                 childSchema = childSchema != null ? childSchema : findSchema(currentSchema, "collections", "%");
 
-                // search for an unamed schema node
+                // search for an unnamed schema node
                 childSchema = childSchema != null ? childSchema : (SchemaNode)currentSchema.firstChild("%");
             }
         }
@@ -316,7 +324,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         setVariable(getCurrent(), getCurrentSchema(), name, value);
     }
 
-    
+
 
     /**
      * Sets the given node's property value by name referencing the given schema.

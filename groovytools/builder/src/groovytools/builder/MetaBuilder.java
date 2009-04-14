@@ -645,10 +645,11 @@ public class MetaBuilder {
     }
 
     /**
+     * Creates a Script from viewClass and returns the last object built by running the resulting script.
      *
      * @param objectVisitor a Closure that must accept two arguments: the node name and the node
      * @param viewClass
-     * @return
+     * @return see above
      */
     public Object build(Closure objectVisitor, Class viewClass) {
         if (Script.class.isAssignableFrom(viewClass)) {
