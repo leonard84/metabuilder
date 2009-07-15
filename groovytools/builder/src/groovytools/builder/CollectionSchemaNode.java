@@ -272,12 +272,64 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         return size;
     }
 
+
+    public void checkDef(FactoryBuilderSupport builder, Object collectionParent) {
+        Object defAttr = attribute("def");
+        if (defAttr == null) return;
+
+        Integer size = calculateCollectionSize(collectionParent);
+
+        if(size != null && size == 0 ) {
+            Object value = null;
+            // Value can be either a Closure or an Object/Literal
+            if (defAttr instanceof Closure) {
+                value = ((Closure)defAttr).call(collectionParent);
+            } else {
+                value = defAttr;
+            }
+            if (value != null) {
+                // parentBean is null - does setting the parent has any side effects?
+                setParent(builder, collectionParent, value);
+                if (value instanceof Collection) {
+                    // Value is a collection. Add each element to the parent collection
+                    // Slow for large collections!
+                    for (Iterator iter = ((Collection)value).iterator(); iter.hasNext();) {
+                        Object element = iter.next();
+                        setChild(builder, collectionParent, element);
+                    }
+                } else {
+                    // Value is not a collection. Add single element to parent collection
+                    setChild(builder, collectionParent, value);
+                }
+            } else {
+                throw MetaBuilder.createCollectionException((String)name(), "null is not valid default for a collection");
+            }
+        }
+
+    }
+
     public void checkSize(Object collectionParent) {
         Integer min = (Integer)attribute("min");
         Integer max = (Integer)attribute("max");
 
         if(min == null && max == null) return;
 
+        Integer size = calculateCollectionSize(collectionParent);
+
+        if(min != null) {
+            if((min > 0 && (size == null || min.compareTo(size) > 0))) {
+                throw MetaBuilder.createCollectionException((String)name(), "min check failed");
+            }
+        }
+
+        if(max != null) {
+            if(max.compareTo(size) < 0) {
+                throw MetaBuilder.createCollectionException((String)name(), "max check failed");
+            }
+        }
+    }
+
+    private Integer calculateCollectionSize(Object collectionParent) {
         Object sizeAttr = attribute("size");
         Integer size = null;
 
@@ -327,18 +379,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         catch(Exception e) {
             throw MetaBuilder.createCollectionException((String)name(), e);
         }
-
-        if(min != null) {
-            if((min > 0 && (size == null || min.compareTo(size) > 0))) {
-                throw MetaBuilder.createCollectionException((String)name(), "min check failed");
-            }
-        }
-
-        if(max != null) {
-            if(max.compareTo(size) < 0) {
-                throw MetaBuilder.createCollectionException((String)name(), "max check failed");
-            }
-        }
+        return size;
     }
 
     public boolean isHandlesNodeChildren() {

@@ -1,4 +1,4 @@
-import groovytools.builder.MetaBuilder
+import groovytools.builder.*
 
 /**
  * Tests alternative collection definitions.
@@ -22,7 +22,7 @@ class CollectionAttributesTest extends GroovyTestCase {
                     listOfChildrenAsProperty(property: 'listOfChildren')
                 }
                 collections {
-                    listOfChildren (min: 6 ) { // simple example of a collection of child objects
+                    listOfChildren(min: 6) { // simple example of a collection of child objects
                         child(schema: 'child')
                     }
                     listOfChildren2(collection: "listOfChildren") { // uses the collection above
@@ -34,7 +34,7 @@ class CollectionAttributesTest extends GroovyTestCase {
                     listOfChildren4(add: 'addChildToList', size: 'listSize') {
                         child(schema: 'child')
                     }
-                    listOfChildren5(add: {p, c -> p.addChildToList(c) }, size: {p -> p.listSize() } ) {
+                    listOfChildren5(add: {p, c -> p.addChildToList(c) }, size: {p -> p.listSize() }) {
                         child(schema: 'child')
                     }
                     mapOfChildren(key: 'name') { // simple example of a Map of child objects, using getName() as the key
@@ -60,7 +60,7 @@ class CollectionAttributesTest extends GroovyTestCase {
         }
 
         def parent1 = mb.build {
-            parent (name: 'Lists of Children', listOfChildrenAsProperty: ['Jeb', 'Job']) {
+            parent(name: 'Lists of Children', listOfChildrenAsProperty: ['Jeb', 'Job']) {
                 listOfChildren {
                     child(name: 'Jay')
                 }
@@ -95,13 +95,59 @@ class CollectionAttributesTest extends GroovyTestCase {
         assertEquals(5, parent1.mapOfChildren.size())
     }
 
+    public void test2() {
+        MetaBuilder mb = new MetaBuilder()
+
+        def children
+
+        def parentDef = mb.define {
+            child(factory: TestChild) {
+                properties {
+                    name(min: 3)
+                }
+            }
+            parent(factory: TestParent) {
+                properties {
+                    name()
+                }
+                collections {
+                    listOfChildren(def: {
+                        mb.buildList {
+                            child('Jic')
+                            child('Joc')
+                            child('Jac')
+                        }
+                    })
+                            {
+                                child(schema: 'child')
+                            }
+                }
+            }
+        }
+
+        def parent1 = mb.build {
+            parent(name: 'Lists of Children') {
+                child('Jöb')
+            }
+        }
+        def parent2 = mb.build {
+            parent(name: 'Lists of Children') {
+            }
+        }
+
+        assertEquals(1, parent1.listOfChildren.size())
+        assertEquals(3, parent2.listOfChildren.size())
+    }
+
     public static void main(String[] args) {
         try {
             CollectionAttributesTest t = new CollectionAttributesTest()
             t.test1()
+            t.test2()
         }
         catch (Exception exc) {
             exc.printStackTrace();
         }
     }
+
 }

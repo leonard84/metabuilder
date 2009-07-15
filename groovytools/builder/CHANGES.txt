@@ -1,3 +1,11 @@
+1.1.6
+-----
+* Added support for default collection values.
+
+1.1.5
+-----
+* Fixed a bug with resolving unqualified collections via a schema ref.
+
 1.1.4
 -----
 * Fixed a bug whereby root objects resulted in NPEs if their schema name was a
@@ -11,7 +19,7 @@
   respected.
 * Added ability to pass a build visitor, which is a closure that you can
   provide to MetaBuilder and for which will be
-  
+
 1.1.2
 -----
 * By request, now built targetting JDK 1.5.
