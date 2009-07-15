@@ -180,14 +180,15 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         SchemaNode result = null;
         SchemaNode collectionsSchema = (SchemaNode)parentSchema.firstChild(containerName);
         List collectionList = collectionsSchema != null ? collectionsSchema.children() : null;
-        if(collectionList == null) {
-            Object extendSchemaRef = parentSchema.attribute("schema");
-            SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
-            if(extendSchema != null) {
-                result = findCollectionSchema(extendSchema, containerName, name);
-            }
-        }
-        else {
+
+        /*
+            Priority :
+            1. parentSchema's collection
+            2. parentSchema's super schema's collection
+         */
+
+        if(collectionList != null) {
+            // have a collection, so check each member
             for(int i = 0; i < collectionList.size(); i++) {
                 Object o = collectionList.get(i);
                 if(o instanceof SchemaNode == false) continue;
@@ -195,15 +196,21 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 result = (SchemaNode)collectionSchema.firstChild(name);
 
                 if(result == null) {
-                    // Search super schemas for name
+                    // Search the collection's super schemas for name
                     Object extendSchemaRef = collectionSchema.attribute("schema");
                     SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
                     if(extendSchema != null) {
                         result = findCollectionSchema(extendSchema, containerName, name);
                     }
                 }
-                if(result != null) break;
+                if(result != null) return result;
             }
+        }
+        // still no result, check the parentSchema's super schema
+        Object extendSchemaRef = parentSchema.attribute("schema");
+        SchemaNode extendSchema = resolveSchemaRef(extendSchemaRef);
+        if(extendSchema != null) {
+            result = findCollectionSchema(extendSchema, containerName, name);
         }
         return result;
     }
@@ -393,6 +400,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 
         for(int i = 0; i < collectionsList.size(); i++) {
             CollectionSchemaNode collectionSchema = (CollectionSchemaNode)collectionsList.get(i);
+            collectionSchema.checkDef(this, node);
             collectionSchema.checkSize(node);
         }
     }

@@ -316,7 +316,7 @@ import java.io.*;
  *  <td>n/a</td>
  * </tr>
  * <tr>
- *  <td><code>def</code></td>
+ *  <td><code>def (property)</code></td>
  *  <td>Used to specify a default value.  Optional.</td>
  *  <td>Any literal value may be passed to the property.</td>
  *  <td>Any object may be passed to the property.</td>
@@ -327,6 +327,14 @@ import java.io.*;
  *   </ul>
  *   The {@link Closure} is called each time a default value is needed.
  *  </td>
+ * </tr>
+ * <tr>
+ *  <td><code>def (collection)</code></td>
+ *  <td>Used to specify a default collection.  Optional.</td>
+ *  <td>Any literal may be specified for non-map collections.
+ *  <td>If a {@link Collection} is specified, its values are added individually to the collection.  Any other object is simply added to the collection.</td>
+ *  <td>n/a</td>
+ *  <td>n/a</td>
  * </tr>
  * </table>
  * <a name="extendingSchema"/>
@@ -553,6 +561,8 @@ public class MetaBuilder {
         colSchemaPropertiesAdd.attributes().put("check", nullOrStringOrClosure);
         SchemaNode colSchemaPropertiesKey = new SchemaNode(colSchemaProperties, "key");
         colSchemaPropertiesKey.attributes().put("check", nullOrStringOrClosure);
+        SchemaNode colSchemaPropertiesDef = new SchemaNode(colSchemaProperties, "def");
+        // don't need a check for collection default since it can take any object as a default value
 
         SchemaNode colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name, e.g. foo
         colElementSchema.attributes().put("schema", metaSchema);
@@ -903,7 +913,7 @@ public class MetaBuilder {
                 // attempt factory resolution
                 try {
                     if (factory.getMetaClass().respondsTo(factory, methodName).isEmpty()) {
-                        // dispatch to fectories if it is not a literal method
+                        // dispatch to factories if it is not a literal method
                         return factory.invokeMethod(methodName, arguments);
                     } else {
                         return InvokerHelper.invokeMethod(factory, methodName, arguments);
@@ -923,7 +933,7 @@ public class MetaBuilder {
                 // attempt factory resolution
                 try {
                     if (factory.getMetaClass().respondsTo(factory, methodName).isEmpty()) {
-                        // dispatch to fectories if it is not a literal method
+                        // dispatch to factories if it is not a literal method
                         return factory.invokeMethod(methodName, arguments);
                     } else {
                         return InvokerHelper.invokeMethod(factory, methodName, arguments);
