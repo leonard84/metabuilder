@@ -554,8 +554,11 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                         new SchemaNode(mergedProperties, property.name(), property.attributes());
                     }
                     else {
-                        // overwrites previous attribute, if present
-                        mergedProperty.attributes().putAll(property.attributes());
+                        // Copies and overwrites any previous attributes, if present
+                        Map mergedPropertyAttributes = new HashMap(mergedProperty.attributes());
+                        mergedPropertyAttributes.putAll(property.attributes());
+                        mergedProperties.remove(mergedProperty);
+                        new SchemaNode(mergedProperties, property.name(), mergedPropertyAttributes);
                     }
                 }
             }
@@ -596,8 +599,11 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                         new CollectionSchemaNode(mergedCollections, collection.name(), collection.attributes());
                     }
                     else {
-                        // overwrites previous attribute, if present
-                        mergedCollection.attributes().putAll(collection.attributes());
+                        // Copies and overwrites any previous attributes, if present
+                        Map mergedCollectionAttributes = new HashMap(mergedCollection.attributes());
+                        mergedCollectionAttributes.putAll(collection.attributes());
+                        mergedCollections.remove(mergedCollection);
+                        new CollectionSchemaNode(mergedCollections, collection.name(), mergedCollectionAttributes);
                     }
                 }
             }
