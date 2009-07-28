@@ -374,6 +374,25 @@ public class MetaBuilder {
     private Factory defaultBuildNodeFactory;
     private Factory defaultDefineNodeFactory;
 
+    static {
+        String packagePrefixes = System.getProperty("groovy.sanitized.stacktraces",
+            "groovy.," +
+            "org.codehaus.groovy.," +
+            "java.," +
+            "javax.," +
+            "sun.," +
+            "gjdk.groovy.,"
+        );
+        try {
+        System.setProperty("groovy.sanitized.stacktraces",
+            packagePrefixes +
+            "groovytools.builder.,");
+        }
+        catch(Exception exc) {
+            // let it go....
+        }
+    }
+
     protected class SchemaAdder extends Closure {
         public SchemaAdder() {
             super(null);
@@ -789,52 +808,52 @@ public class MetaBuilder {
 
     public static RuntimeException createNodeException(String name, String error) {
         StringBuilder message = new StringBuilder("Node '").append(name).append("': ").append(error);
-        return new NodeException(message.toString());
+        return (RuntimeException)StackTraceUtils.sanitize(new NodeException(message.toString()));
     }
 
     public static RuntimeException createNodeException(String name, Throwable error) {
         StringBuilder message = new StringBuilder("Node '").append(name).append("': ").append(error);
-        return new NodeException(message.toString(), error);
+        return (RuntimeException)StackTraceUtils.sanitize(new NodeException(message.toString(), error));
     }
 
     public static RuntimeException createPropertyException(String name, String error) {
         StringBuilder message = new StringBuilder("Property '").append(name).append("': ").append(error);
-        return new PropertyException(message.toString());
+        return (RuntimeException)StackTraceUtils.sanitize(new PropertyException(message.toString()));
     }
 
     public static RuntimeException createPropertyException(String name, Throwable error) {
         StringBuilder message = new StringBuilder("Property '").append(name).append("': ").append(error);
-        return new PropertyException(message.toString(), error);
+        return (RuntimeException)StackTraceUtils.sanitize(new PropertyException(message.toString(), error));
     }
 
     public static RuntimeException createCollectionException(String name, String error) {
         StringBuilder message = new StringBuilder("Collection '").append(name).append("': ").append(error);
-        return new CollectionException(message.toString());
+        return (RuntimeException)StackTraceUtils.sanitize(new CollectionException(message.toString()));
     }
 
     public static RuntimeException createCollectionException(String name, Throwable error) {
         StringBuilder message = new StringBuilder("Collection '").append(name).append("': ").append(error);
-        return new CollectionException(message.toString(), error);
+        return (RuntimeException)StackTraceUtils.sanitize(new CollectionException(message.toString(), error));
     }
 
     public static RuntimeException createFactoryException(String name, String error) {
         StringBuilder message = new StringBuilder("'").append(name).append("' factory: ").append(error);
-        return new FactoryException(message.toString());
+        return (RuntimeException)StackTraceUtils.sanitize(new FactoryException(message.toString()));
     }
 
     public static RuntimeException createFactoryException(String name, Throwable error) {
         StringBuilder message = new StringBuilder("'").append(name).append("' factory: ").append(error);
-        return new FactoryException(message.toString(), error);
+        return (RuntimeException)StackTraceUtils.sanitize(new FactoryException(message.toString(), error));
     }
 
     public static RuntimeException createSchemaNotFoundException(String name) {
         StringBuilder message = new StringBuilder(name);
-        return new SchemaNotFoundException(message.toString());
+        return (RuntimeException)StackTraceUtils.sanitize(new SchemaNotFoundException(message.toString()));
     }
 
     public static RuntimeException createClassNameNotFoundException(String name) {
         StringBuilder message = new StringBuilder(name);
-        return new ClassNameNotFoundException(message.toString());
+        return (RuntimeException)StackTraceUtils.sanitize(new ClassNotFoundException(message.toString()));
     }
 
     /**
