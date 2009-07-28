@@ -353,19 +353,19 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             // Check for the possibility of a wild card indicated by a schema with name = %
             propertySchema = findSchema(schema, "properties", "%");
             if(propertySchema == null) {
-                throw MetaBuilder.createPropertyException(name, "property unkown");
+                throw MetaBuilder.createPropertyException(schema.fqn() + '.' + name, "property unkown");
             }
         }
 
         if(value != null) {
             Comparable min = (Comparable)propertySchema.attribute("min");
             Comparable minMaxValComp = null;
-            if(min != null && min.compareTo(minMaxValComp = getMinMaxValComp(name, value)) > 0) {
-                throw MetaBuilder.createPropertyException(name, "min check failed");
+            if(min != null && min.compareTo(minMaxValComp = getMinMaxValComp(schema, name, value)) > 0) {
+                throw MetaBuilder.createPropertyException(schema.fqn(name), "min check failed");
             }
             Comparable max = (Comparable)propertySchema.attribute("max");
             if(max != null && max.compareTo(minMaxValComp) < 0) {
-                throw MetaBuilder.createPropertyException(name, "max check failed");
+                throw MetaBuilder.createPropertyException(schema.fqn(name), "max check failed");
             }
         }
         checkPropertyValue(propertySchema, value);
@@ -422,7 +422,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             else {
                 Boolean req = (Boolean)attributes.get("req");
                 if(req != null && req) {
-                    throw MetaBuilder.createPropertyException((String)propertySchema.name(), "property required");
+                    throw MetaBuilder.createPropertyException(propertySchema.fqn(), "property required");
                 }
             }
         }
@@ -640,10 +640,10 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             b =  ScriptBytecodeAdapter.isCase(val, check);
         }
         catch(Throwable t) {
-            throw MetaBuilder.createPropertyException((String)schema.name(), t);
+            throw MetaBuilder.createPropertyException(schema.fqn(), t);
         }
         if(!b) {
-            throw MetaBuilder.createPropertyException((String)schema.name(), "value invalid");
+            throw MetaBuilder.createPropertyException((String)schema.fqn(), "value invalid");
         }
     }
 
@@ -661,21 +661,22 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             b =  ScriptBytecodeAdapter.isCase(node, check);
         }
         catch(Throwable t) {
-            throw MetaBuilder.createNodeException((String)schema.name(), t);
+            throw MetaBuilder.createNodeException(schema.fqn(), t);
         }
         if(!b) {
-            throw MetaBuilder.createNodeException((String)schema.name(), "check failed");
+            throw MetaBuilder.createNodeException(schema.fqn(), "check failed");
         }
     }
 
     /**
      * Returns a {@link Comparable} object that can be used with the <code>min</code> and <code>max</code> constraints.
      *
+     * @param schema the property owner (used to report errors)
      * @param name the property name (used to report errors)
      * @param val the property value
      * @return see above
      */
-    protected Comparable getMinMaxValComp(String name, Object val) {
+    protected Comparable getMinMaxValComp(SchemaNode schema, String name, Object val) {
         if(val instanceof String) {
             return ((String)val).length();
         }
@@ -689,7 +690,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             return (Comparable)val;
         }
         else {
-            throw MetaBuilder.createPropertyException(name, "value is not comparable");
+            throw MetaBuilder.createPropertyException(schema.fqn(name), "value is not comparable");
         }
     }
 
@@ -714,7 +715,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
                 propertyName = (String)propertyAttr;
             }
             else {
-                throw MetaBuilder.createPropertyException(propertyName, "'property' attribute of schema does not specify a string or closure.");
+                throw MetaBuilder.createPropertyException(propertySchema.fqn(propertyName), "'property' attribute of schema does not specify a string or closure.");
             }
         }
         else {

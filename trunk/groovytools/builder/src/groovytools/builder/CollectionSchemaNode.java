@@ -104,7 +104,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             key = InvokerHelper.getProperty(child, (String)keyAttr);
         }
         else {
-            throw MetaBuilder.createCollectionException((String)name(), "schema's key value is not a supported type");
+            throw MetaBuilder.createCollectionException(fqn(), "schema's key value is not a supported type");
         }
         return key;
     }
@@ -205,7 +205,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                     }
                 }
                 else {
-                    throw MetaBuilder.createCollectionException((String)name(), "schema's add value is not a String or Closure");
+                    throw MetaBuilder.createCollectionException(fqn(), "schema's add value is not a String or Closure");
                 }
             }
             else {
@@ -235,7 +235,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                     property = InvokerHelper.getProperty(parentBean, (String)collectionAttr);
                 }
                 else {
-                    throw MetaBuilder.createCollectionException((String)name(), "schema's collection value is not a String or Closure");
+                    throw MetaBuilder.createCollectionException(fqn(), "schema's collection value is not a String or Closure");
                 }
 
                 if(property != null) {
@@ -253,7 +253,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             }
         }
         catch(Exception e) {
-            throw MetaBuilder.createCollectionException((String)name(), e);
+            throw MetaBuilder.createCollectionException(fqn(), e);
         }
     }
 
@@ -267,7 +267,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             size = InvokerHelper.getProperty(parent, (String)sizeAttr);
         }
         else {
-            throw MetaBuilder.createCollectionException((String)name(), "schema's size value is not a supported type");
+            throw MetaBuilder.createCollectionException(fqn(), "schema's size value is not a supported type");
         }
         return size;
     }
@@ -302,7 +302,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                     setChild(builder, collectionParent, value);
                 }
             } else {
-                throw MetaBuilder.createCollectionException((String)name(), "null is not valid default for a collection");
+                throw MetaBuilder.createCollectionException(fqn(), "null is not valid default for a collection");
             }
         }
 
@@ -318,13 +318,13 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
 
         if(min != null) {
             if((min > 0 && (size == null || min.compareTo(size) > 0))) {
-                throw MetaBuilder.createCollectionException((String)name(), "min check failed");
+                throw MetaBuilder.createCollectionException(fqn(), "min check failed");
             }
         }
 
         if(max != null) {
             if(max.compareTo(size) < 0) {
-                throw MetaBuilder.createCollectionException((String)name(), "max check failed");
+                throw MetaBuilder.createCollectionException(fqn(), "max check failed");
             }
         }
     }
@@ -377,7 +377,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
             }
         }
         catch(Exception e) {
-            throw MetaBuilder.createCollectionException((String)name(), e);
+            throw MetaBuilder.createCollectionException(fqn(), e);
         }
         return size;
     }

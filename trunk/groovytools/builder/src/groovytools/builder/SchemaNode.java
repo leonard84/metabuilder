@@ -126,4 +126,35 @@ public class SchemaNode extends Node {
             copy.appendNode(child.deepCopy());
         }
     }
+
+    /**
+     * Returns the fully qualified name of the node.
+     *
+     * @return see above.
+     */
+    public String fqn(){
+        StringBuffer path = new StringBuffer().insert(0, (String)name());
+        if(parent() != null){
+            Node root = parent();
+            while(root != null){
+                String name = (String)root.name();
+                if("mergedCollections".equals(name) == false) {
+                    path.insert(0, '.').insert(0, name);
+                }
+                root = root.parent();
+            }
+        }
+        return path.toString();
+    }
+
+    /**
+     * Returns the fully qualified name of the node appened by name.
+     *
+     * @param name
+     * @return see above.
+     */
+    public String fqn(String name){
+        return fqn() + '.' + name;
+    }
+
 }
