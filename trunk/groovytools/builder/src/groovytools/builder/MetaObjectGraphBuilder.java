@@ -253,12 +253,18 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         }
         else {
             if(current == null) {
-                // No current node exists, see if the  schema supports any name
-                String rootName = (String)currentSchema.name();
-                if(!rootName.equals(childSchemaName) && !rootName.equals("%")) {
-                    throw new IllegalArgumentException(childSchemaName);
+                if(currentSchema == null) {
+                    // This occurs when the root doesn't match and there is no default or anything else to work with
+                    throw MetaBuilder.createSchemaNotFoundException(childSchemaName);
                 }
-                childSchema = currentSchema;
+                else {
+                    // No current node exists, see if the  schema supports any name
+                    String rootName = (String)currentSchema.name();
+                    if(!rootName.equals(childSchemaName) && !rootName.equals("%")) {
+                        throw MetaBuilder.createSchemaNotFoundException(childSchemaName);
+                    }
+                    childSchema = currentSchema;
+                }
             }
             else {
                 // search for a property

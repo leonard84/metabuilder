@@ -1,4 +1,5 @@
 import groovytools.builder.*
+import org.codehaus.groovy.runtime.StackTraceUtils
 
 /**
  * Tests alternative collection definitions.
@@ -111,7 +112,7 @@ class CollectionAttributesTest extends GroovyTestCase {
                     name()
                 }
                 collections {
-                    listOfChildren(def: {
+                    listOfChildren(min: 5, def: {
                         mb.buildList {
                             child('Jic')
                             child('Joc')
