@@ -7,7 +7,9 @@
 class TestChild {
     String name
 
-    TestChild() {}
+    TestChild() {
+        name = null
+    }
 
     TestChild(String name) {
         this.name = name
