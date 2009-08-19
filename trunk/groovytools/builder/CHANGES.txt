@@ -1,6 +1,10 @@
 1.1.6
 -----
 * Added support for default collection values.
+* Fixed a bug whereby building an unknown resulted in an NPE rather than
+  a more specific and understandable exception.
+* Added support for sanitizing stack traces to remove all of the Groovy and
+  MetaBuilder traces.
 
 1.1.5
 -----
