@@ -11,6 +11,10 @@ class AnyPropertyTest extends GroovyTestCase {
     public void test1() {
 
         MetaBuilder mbOne = new MetaBuilder()
+        MetaBuilder mbTwo = new MetaBuilder()
+
+        def one = mbOne.&build
+        def two = mbTwo.&build
 
         def parentDef = mbOne.define {
             parent(factory: TestParent) {
@@ -19,7 +23,10 @@ class AnyPropertyTest extends GroovyTestCase {
                 }
                 collections {
                     listOfChildren() { // simple example of a collection of child objects
-                        '%'(factory: { n,v -> v } )
+                        '%'(factory: { n,v,a -> v } )
+                    }
+                    anotherListOfChildren(collection: 'listOfChildren') { // simple example of a collection of child objects
+                        '%'(factory: { n -> new TestChild(n) } )
                     }
                 }
             }
@@ -30,11 +37,6 @@ class AnyPropertyTest extends GroovyTestCase {
             }
         }
 
-        MetaBuilder mbTwo = new MetaBuilder()
-
-        def one = mbOne.&build
-        def two = mbTwo.&build
-
         def childDef = mbTwo.define {
             childTwo(factory: TestChild) {
                 properties {
@@ -43,12 +45,15 @@ class AnyPropertyTest extends GroovyTestCase {
             }
         }
 
-
         def parentList = mbOne.build {
             parent (name: two { childTwo(name:'aChildTwo')} ) {
                 listOfChildren {
-                    child(one {childOne(name: 'aChildOne')} )
-                    child(two {childTwo(name: 'anotherChildTwo')})
+                    foo(one {childOne(name: 'aChildOne')} )
+                    bar(two {childTwo(name: 'anotherChildTwo')})
+                }
+                anotherListOfChildren {
+                    foo()
+                    bar()
                 }
             }
         }
