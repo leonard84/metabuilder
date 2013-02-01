@@ -1,7 +1,6 @@
 import groovy.xml.MarkupBuilder
 import groovytools.builder.MetaBuilder
 import groovy.xml.StreamingMarkupBuilder
-import org.codehaus.groovy.ant.Groovy
 import org.custommonkey.xmlunit.XMLUnit
 import org.custommonkey.xmlunit.Diff
 import groovytools.builder.SchemaNode
