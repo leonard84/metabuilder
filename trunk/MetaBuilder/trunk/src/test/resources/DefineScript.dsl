@@ -2,7 +2,7 @@
  * invoice schema for ScriptTest
  *
  * @author didge
- * @version $Id$
+ * @version $Id: DefineScript.groovy 73 2013-02-01 19:55:48Z damokles $
  */
 order (factory: Order) {
     properties {
