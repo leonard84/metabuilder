@@ -9,12 +9,12 @@ import groovytools.builder.MetaBuilder
 class ScriptTest extends GroovyTestCase {
     public void test1() {
         MetaBuilder mb = new MetaBuilder()
-        mb.define(new File('test/DefineScript.groovy').toURL())
-        def obj = mb.buildList(new File('test/BuildScript.groovy').toURL())
+        mb.define(ScriptTest.class.getResource('DefineScript.dsl'))
+        def obj = mb.buildList(ScriptTest.class.getResource('BuildScript.dsl'))
         def orders = [:]
-        mb.build({ if(it.isRoot) {orders[it.node.id] = it.node}; it.node }, new File('test/BuildScript.groovy').toURL())
+        mb.build({ if(it.isRoot) {orders[it.node.id] = it.node}; it.node }, ScriptTest.class.getResource('BuildScript.dsl'))
         println(orders)
-        def moreOrders = mb.buildList(new File('test/BuildScript.groovy').toURL())
+        def moreOrders = mb.buildList(ScriptTest.class.getResource('BuildScript.dsl'))
         println(moreOrders)
     }
 

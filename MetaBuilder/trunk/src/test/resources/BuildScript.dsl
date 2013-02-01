@@ -1,6 +1,6 @@
 /**
  * invoice build for ScriptTest
- * $Id$
+ * $Id: BuildScript.groovy 73 2013-02-01 19:55:48Z damokles $
  */
 order (id: 1) {
     line (upc: '1000000000001', qty: 11, price: 11.00)
