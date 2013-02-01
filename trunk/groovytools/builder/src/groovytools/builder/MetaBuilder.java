@@ -17,6 +17,10 @@ package groovytools.builder;
 
 import groovy.lang.*;
 import groovy.util.*;
+
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.ErrorCollector;
+import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.runtime.*;
 
 import java.net.*;
@@ -645,7 +649,7 @@ public class MetaBuilder {
     }
 
     public Object define(URL url) throws IOException {
-        return define(classLoader.parseClass(url.openStream()));
+        return define(classLoader.parseClass(new GroovyCodeSource(url)));
     }
 
     public Object build(Closure objectVisitor, Closure c) {
@@ -699,15 +703,15 @@ public class MetaBuilder {
     }
 
     public Object build(URL url) throws IOException {
-        return build(classLoader.parseClass(url.openStream()));
+        return build(classLoader.parseClass(new GroovyCodeSource(url)));
     }
 
     public Object build(Closure objectVisitor, URL url) throws IOException {
-        return build(objectVisitor, classLoader.parseClass(url.openStream()));
+        return build(objectVisitor, classLoader.parseClass(new GroovyCodeSource(url)));
     }
 
     public List buildList(URL url) throws IOException {
-        return buildList(classLoader.parseClass(url.openStream()));
+        return buildList(classLoader.parseClass(new GroovyCodeSource(url)));
     }
 
     public Object build(Script script) {

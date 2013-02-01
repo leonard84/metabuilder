@@ -112,7 +112,7 @@ class CollectionAttributesTest extends GroovyTestCase {
                     name()
                 }
                 collections {
-                    listOfChildren(min: 5, def: {
+                    listOfChildren(def: {
                         mb.buildList {
                             child('Jic')
                             child('Joc')
