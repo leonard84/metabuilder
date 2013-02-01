@@ -16,5 +16,5 @@ dependencies {
 version = '2.0.0-SNAPSHOT'
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.3'
+    gradleVersion = '1.4'
 }
