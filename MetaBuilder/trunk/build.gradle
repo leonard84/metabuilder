@@ -2,7 +2,6 @@ apply plugin: 'groovy'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 
-
 repositories {
 	mavenCentral()
 }
@@ -12,6 +11,9 @@ dependencies {
 	testCompile 'xmlunit:xmlunit:1.3'
 	testCompile 'junit:junit:4.11'
 }
+
+
+version = '2.0.0-SNAPSHOT'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.3'
