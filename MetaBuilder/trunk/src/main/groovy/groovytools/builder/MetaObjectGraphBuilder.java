@@ -28,6 +28,7 @@ import java.util.*;
  * @author didge
  * @version $Id$
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
 
     /**
@@ -43,7 +44,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     /**
      * Keeps track of the current schema while descending into an object graph.
      */
-    private LinkedList schemaStack;
+	private LinkedList schemaStack;
 
     /**
      * Keeps track of which properties were set/unset

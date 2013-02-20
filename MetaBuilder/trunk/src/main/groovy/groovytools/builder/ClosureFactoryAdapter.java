@@ -34,8 +34,9 @@ import java.util.*;
  * @author didge
  * @version $Id$
  */
+@SuppressWarnings("rawtypes")
 public class ClosureFactoryAdapter extends AbstractFactory {
-    protected Closure closure;
+	protected Closure closure;
 
     public ClosureFactoryAdapter(Closure closure) {
         this.closure = closure;

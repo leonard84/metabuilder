@@ -25,6 +25,7 @@ import java.util.*;
  * @author didge
  * @version $Id$
  */
+@SuppressWarnings({"unchecked", "rawtypes", "serial"})
 public class SchemaNode extends Node {
 
     protected SchemaNode _parent;

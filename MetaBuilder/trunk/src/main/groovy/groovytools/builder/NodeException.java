@@ -21,6 +21,7 @@ package groovytools.builder;
  * @author didge
  * @version $Id$
  */
+@SuppressWarnings({"serial"})
 public class NodeException extends MetaBuilderException {
     public NodeException() {
     }

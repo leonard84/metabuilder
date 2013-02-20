@@ -15,18 +15,30 @@
 
 package groovytools.builder;
 
-import groovy.lang.*;
-import groovy.util.*;
+import groovy.lang.Binding;
+import groovy.lang.Closure;
+import groovy.lang.DelegatingMetaClass;
+import groovy.lang.GroovyClassLoader;
+import groovy.lang.GroovyCodeSource;
+import groovy.lang.MetaClass;
+import groovy.lang.MissingMethodException;
+import groovy.lang.Script;
+import groovy.util.AbstractFactory;
+import groovy.util.Factory;
+import groovy.util.FactoryBuilderSupport;
+import groovy.util.ObjectGraphBuilder;
 
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.ErrorCollector;
-import org.codehaus.groovy.control.SourceUnit;
-import org.codehaus.groovy.runtime.*;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
-import java.net.*;
-import java.util.*;
-import java.util.regex.*;
-import java.io.*;
+import org.codehaus.groovy.runtime.InvokerHelper;
+import org.codehaus.groovy.runtime.StackTraceUtils;
 
 /**
  * <code>MetaBuilder</code> is a builder that uses schemas to more conveniently and correctly
@@ -371,8 +383,9 @@ import java.io.*;
  * @author didge
  * @version $Id$
  */
+@SuppressWarnings({"unchecked", "rawtypes", "serial"})
 public class MetaBuilder {
-    private Map schemas;
+	private Map schemas;
     private SchemaNode defaultMetaSchema;
     private GroovyClassLoader classLoader;
     private Factory defaultBuildNodeFactory;
@@ -397,7 +410,7 @@ public class MetaBuilder {
         }
     }
 
-    protected class SchemaAdder extends Closure {
+	protected class SchemaAdder extends Closure {
         public SchemaAdder() {
             super(null);
             maximumNumberOfParameters = 1;
@@ -508,7 +521,8 @@ public class MetaBuilder {
      *
      * @return see above
      */
-    protected SchemaNode createDefaultMetaSchema() {
+	@SuppressWarnings("unused")
+	protected SchemaNode createDefaultMetaSchema() {
 
         Factory schemaNodeFactory = new DefaultDefineSchemaNodeFactory();
         Factory collectionNodeFactory = new DefaultCollectionSchemaNodeFactory();
@@ -586,6 +600,9 @@ public class MetaBuilder {
         colSchemaPropertiesKey.attributes().put("check", nullOrStringOrClosure);
         SchemaNode colSchemaPropertiesDef = new SchemaNode(colSchemaProperties, "def");
         // don't need a check for collection default since it can take any object as a default value
+        SchemaNode colSchemaPropertiesFactory = new SchemaNode(colSchemaProperties, "factory");
+        colSchemaPropertiesFactory.attributes().put("check", nullOrClosure);
+        
 
         SchemaNode colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name, e.g. foo
         colElementSchema.attributes().put("schema", metaSchema);
