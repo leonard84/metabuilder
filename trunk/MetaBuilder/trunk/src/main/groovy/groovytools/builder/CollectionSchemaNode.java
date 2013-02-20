@@ -27,6 +27,7 @@ import java.util.*;
  * @author didge
  * @version $Id$
  */
+@SuppressWarnings({"serial","rawtypes","unchecked"})
 public class CollectionSchemaNode extends SchemaNode implements Factory {
     /**
      * Holder for the actual parent object.
@@ -41,7 +42,7 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
         super(parent, name, value);
     }
 
-    public CollectionSchemaNode(SchemaNode parent, Object name, Map attributes) {
+	public CollectionSchemaNode(SchemaNode parent, Object name, Map attributes) {
         super(parent, name, attributes);
     }
 
@@ -236,6 +237,22 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                 }
                 else {
                     throw MetaBuilder.createCollectionException(fqn(), "schema's collection value is not a String or Closure");
+                }
+                
+                if (property == null) {
+                	Object factoryAttr = attribute("factory");
+                	// Maybe extend this to other forms of factory handling
+                	if (factoryAttr instanceof Closure) {
+                		property = ((Closure)factoryAttr).call();
+                	} else {
+                        if (keyAttr == null) { //if key attribute is defined then we assume it is a list
+                        	property = new ArrayList();
+                        } else { //if key attribute is defined then we assume it is a map
+                        	property = new HashMap();
+                        }                		
+                	}
+                    // also set the new collection to the parent
+                    InvokerHelper.setProperty(parentBean, (String)collectionAttr, property);
                 }
 
                 if(property != null) {

@@ -30,6 +30,7 @@ import java.util.*;
  * @author didge
  * @version $Id$
  */
+@SuppressWarnings("rawtypes")
 public class MetaConfigBuilder extends MetaBuilder {
 
     public MetaConfigBuilder() {
@@ -37,7 +38,7 @@ public class MetaConfigBuilder extends MetaBuilder {
     }
 
     protected class MetaConfigObjectFactory extends AbstractFactory {
-        public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
+		public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
             return new ConfigObject();
         }
 
