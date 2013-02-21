@@ -35,62 +35,80 @@ class PropertyAttributesTest extends Specification {
 	
 	def "Node name should be used as default"() {
 		when:
-		def parent = mb.build { parent(name: 'Lists of Children1') }
+		def result = mb.build { parent(name: 'Lists of Children') }
+		def result2 = mb.build { 			
+			parent {
+				name = 'Lists of Children'
+			 }
+		}
 		
 		then:
-		parent.name == 'Lists of Children1'
+		result.name == 'Lists of Children'
+		result2.name == 'Lists of Children'
 	}
 	
 	def "Node name should be used as default for nested properties"() {
 		when:
-		def parent = mb.build { 
+		def result = mb.build { 
 			parent {
 				onlyChild(name: 'derp')
 			 }
 		}
 		then:
-		parent.onlyChild.name == 'derp'
+		result.onlyChild.name == 'derp'
 	}
 	
 	def "Property String attribute should be respected"() {
 		when:
-		def parent = mb.build { parent(name2: 'Lists of Children2') }
+		def result = mb.build { parent(name2: 'Lists of Children') }
+		def result2 = mb.build {
+			parent {
+				name2 = 'Lists of Children'
+			 }
+		}
 		
 		then:
-		parent.name == 'Lists of Children2'
+		result.name == 'Lists of Children'
+		result2.name == 'Lists of Children'
 	}
 	
 	
 	def "Property String attribute should be respected for nested properties"() {
 		when:
-		def parent = mb.build { 
+		def result = mb.build { 
 			parent {
 				stepChild(name: 'herp')
 			 }
 		}
 			
 		then:
-		parent.onlyChild.name == 'herp'
+		result.onlyChild.name == 'herp'
 	}
 	
 	def "Property Closure attribute should be respected"() {
 		when:
-		def parent = mb.build { parent(name3: 'Lists of Children2') }
+		def result = mb.build { parent(name3: 'Lists of Children') }
+		def result2 = mb.build {
+			parent {
+				name3 = 'Lists of Children'
+			 }
+		}
 		
 		then:
-		parent.name == 'Lists of Children2'
+		result.name == 'Lists of Children'
+		result2.name == 'Lists of Children'
 	}
 	
 	
 	def "Property Closure attribute should be respected for nested properties"() {
 		when:
-		def parent = mb.build {
+		def result = mb.build {
 			parent {
 				otherChild(name: 'twerp')
 			 }
 		}
 			
 		then:
-		parent.onlyChild.name == 'twerp'
+		result.onlyChild.name == 'twerp'
 	}
 }
