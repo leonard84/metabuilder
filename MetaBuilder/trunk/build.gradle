@@ -13,9 +13,24 @@ dependencies {
 	testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
 }
 
-
+// MetaInfo
+group = 'groovytools.builder'
 version = '2.0.0-SNAPSHOT'
+//default artifact name is defined in settings.gradle  
+
+defaultTasks('build')
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.4'
+}
+
+task writePom {
+	doLast {
+		pom {
+		}.writeTo("build/classes/main/META-INF/maven/${project.group}/${project.name}/pom.xml")
+	}
+}
+
+afterEvaluate {
+	 getTasksByName('jar', false)*.dependsOn('writePom')
 }
