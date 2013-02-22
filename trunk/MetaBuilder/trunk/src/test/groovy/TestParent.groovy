@@ -5,9 +5,10 @@
  * @version $Id$
  */
 public class TestParent {
-    def name
-    def listOfChildren = []
-    def mapOfChildren = [:]
+    String name
+    List listOfChildren = []
+    Map mapOfChildren = [:]
+	TestChild onlyChild
 
     public void addChildToList(TestChild child) {
         listOfChildren.add(child)
