@@ -747,13 +747,30 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
     protected void setParent(Object parent, Object child) {
         SchemaNode currentSchema = getCurrentSchema();
         SchemaNode parentSchema = (SchemaNode)currentSchema.parent();
+        Object propertyAttr = currentSchema.attribute("property");
         if(parent != parentSchema && parentSchema instanceof CollectionSchemaNode) {
             // This section is needed in case a collection member was used outside of a collection
             Factory parentFactory = (Factory)parentSchema;
             parentFactory.setParent(this, parent, child);
             parentFactory.setChild(this, parent, child);
-        }
-        else {
+            
+        } else if(propertyAttr != null) { // support override of property name
+        	
+            if(propertyAttr instanceof Closure) {
+                Closure propertyClosure = (Closure)propertyAttr;
+                propertyClosure.call(new Object[]{parent, child});
+                return;
+            }
+            else if(propertyAttr instanceof String) {
+            	String propertyName = (String)propertyAttr;
+
+                InvokerHelper.setProperty(parent, propertyName, child);
+            }
+            else {
+                throw MetaBuilder.createPropertyException(currentSchema.fqn(""), "'property' attribute of schema does not specify a string or closure.");
+            }
+        	
+        } else {
             FactoryBuilderSupport proxyBuilder = getProxyBuilder();
             Factory currentFactory = proxyBuilder.getCurrentFactory();
             currentFactory.setParent(this, parent, child);
