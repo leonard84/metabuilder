@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.codehaus.groovy.runtime.InvokerHelper;
+import org.codehaus.groovy.runtime.ResourceGroovyMethods;
 import org.codehaus.groovy.runtime.StackTraceUtils;
 
 /**
@@ -390,6 +391,7 @@ public class MetaBuilder {
     private GroovyClassLoader classLoader;
     private Factory defaultBuildNodeFactory;
     private Factory defaultDefineNodeFactory;
+    private String defaultEncoding;
 
     static {
         String packagePrefixes = System.getProperty("groovy.sanitized.stacktraces",
@@ -496,6 +498,14 @@ public class MetaBuilder {
     public void setDefaultDefineNodeFactory(Factory defaultDefineNodeFactory) {
         this.defaultDefineNodeFactory = defaultDefineNodeFactory;
     }
+    
+    public String getDefaultEncoding() {
+		return defaultEncoding;
+	}
+    
+    public void setDefaultEncoding(String defaultEncoding) {
+		this.defaultEncoding = defaultEncoding;
+	}
 
     /**
      * Subclasses may override this to specify an alternative factory for defining schema.
@@ -625,6 +635,16 @@ public class MetaBuilder {
 
         return metaSchema;
     }
+	
+	private Class loadClass(URL url, String encoding) throws IOException {
+		if (encoding == null) {
+			return classLoader.parseClass(new GroovyCodeSource(url));
+		} else {
+			String name = url.toExternalForm();
+			String scriptContent = ResourceGroovyMethods.getText(url, encoding);
+			return classLoader.parseClass(new GroovyCodeSource(scriptContent, name, "/groovy/script"));
+		}
+	}
 
     /**
      * Defines, registers and returns a new schema using the default meta schema.  Defined schemas are available for
@@ -666,7 +686,11 @@ public class MetaBuilder {
     }
 
     public Object define(URL url) throws IOException {
-        return define(classLoader.parseClass(new GroovyCodeSource(url)));
+        return define(loadClass(url, defaultEncoding));
+    }
+    
+    public Object define(URL url, String encoding) throws IOException {
+        return define(loadClass(url, encoding));
     }
 
     public Object build(Closure objectVisitor, Closure c) {
@@ -720,15 +744,27 @@ public class MetaBuilder {
     }
 
     public Object build(URL url) throws IOException {
-        return build(classLoader.parseClass(new GroovyCodeSource(url)));
+    	return build(loadClass(url, defaultEncoding));
+    }
+    
+    public Object build(URL url, String encoding) throws IOException {
+        return build(loadClass(url, encoding));
     }
 
     public Object build(Closure objectVisitor, URL url) throws IOException {
         return build(objectVisitor, classLoader.parseClass(new GroovyCodeSource(url)));
     }
 
+    public Object build(Closure objectVisitor, URL url, String encoding) throws IOException {
+        return build(objectVisitor, loadClass(url, encoding));
+    }
+
     public List buildList(URL url) throws IOException {
-        return buildList(classLoader.parseClass(new GroovyCodeSource(url)));
+        return buildList(loadClass(url, defaultEncoding));
+    }
+    
+    public List buildList(URL url, String encoding) throws IOException {
+        return buildList(loadClass(url, encoding));
     }
 
     public Object build(Script script) {
