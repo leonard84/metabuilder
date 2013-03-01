@@ -28,6 +28,7 @@ import groovy.util.Factory;
 import groovy.util.FactoryBuilderSupport;
 import groovy.util.ObjectGraphBuilder;
 
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import java.util.regex.Pattern;
 import org.codehaus.groovy.runtime.InvokerHelper;
 import org.codehaus.groovy.runtime.ResourceGroovyMethods;
 import org.codehaus.groovy.runtime.StackTraceUtils;
+import sun.reflect.Reflection;
 
 /**
  * <code>MetaBuilder</code> is a builder that uses schemas to more conveniently and correctly
@@ -451,11 +453,14 @@ public class MetaBuilder {
     /**
      * Constructs a <code>MetaBuilder</code> with the default meta schema, node factory and class loader.
      *
+     * Note that the class loader is by default the class loader of the instance or the class loader of
+     * the containing Groovy Script, if any.
+     *
      * @see #createDefaultMetaSchema()
      */
     public MetaBuilder() {
         this(null, null);
-        setClassLoader(getClass().getClassLoader());
+        setClassLoader(getDefaultClassLoader());
         this.defaultMetaSchema = createDefaultMetaSchema();
     }
 
@@ -483,6 +488,18 @@ public class MetaBuilder {
         this.defaultDefineNodeFactory = createDefaultDefineNodeFactory();
     }
 
+    public ClassLoader getDefaultClassLoader() {
+        int frame = 1;
+        Class c = Reflection.getCallerClass(frame);
+        while (c != null && !(c.getClassLoader() instanceof groovy.lang.GroovyClassLoader.InnerLoader)) {
+            frame++;
+            //if(c.getClassLoader() != null) System.out.println(c.getClassLoader().hashCode() + " " + c + " " + c.getClassLoader());
+            c = Reflection.getCallerClass(frame);
+        }
+        //if(c.getClassLoader() != null) System.out.println(c.getClassLoader().hashCode() + " " + c + " " + c.getClassLoader());
+        if(c != null) return c.getClassLoader();
+        return getClass().getClassLoader();
+    }
     public Factory getDefaultBuildNodeFactory() {
         return defaultBuildNodeFactory;
     }
