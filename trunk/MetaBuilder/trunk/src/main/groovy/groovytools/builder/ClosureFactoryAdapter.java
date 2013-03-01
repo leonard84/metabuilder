@@ -20,6 +20,8 @@ import groovy.lang.*;
 
 import java.util.*;
 
+import org.codehaus.groovy.runtime.InvokerHelper;
+
 /**
  * Adapts a given {@link Closure} such that it can support the {@link Factory#newInstance(FactoryBuilderSupport, Object, Object, Map)}
  * method.  It is important that the {@link Closure} supports the proper number, type and
@@ -41,6 +43,19 @@ public class ClosureFactoryAdapter extends AbstractFactory {
     public ClosureFactoryAdapter(Closure closure) {
         this.closure = closure;
     }
+    
+//    @Override
+//    public void setParent(FactoryBuilderSupport builder, Object parent,
+//    		Object child) {
+//    	if (builder instanceof MetaObjectGraphBuilder) {
+//			MetaObjectGraphBuilder mogb = (MetaObjectGraphBuilder) builder;
+//			SchemaNode node = mogb.getCurrentSchema();
+//			String propertyName = (String) node.name();
+//			InvokerHelper.setProperty(parent, propertyName, child);
+//		} else {
+//			super.setParent(builder, parent, child);
+//		}
+//    }
 
     /**
      * Invocations of this method are delegated to the {@link Closure} to return an object when called.
