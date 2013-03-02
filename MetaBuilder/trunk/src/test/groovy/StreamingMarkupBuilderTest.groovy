@@ -1,9 +1,7 @@
-import groovy.xml.MarkupBuilder
 import groovytools.builder.MetaBuilder
-import groovy.xml.StreamingMarkupBuilder
-import org.custommonkey.xmlunit.XMLUnit
+
 import org.custommonkey.xmlunit.Diff
-import groovytools.builder.SchemaNode
+import org.custommonkey.xmlunit.XMLUnit
 
 /**
  * This test demonstrates the use of {@link MetaBuilder}'s default node factories.  The objects built are constructed
