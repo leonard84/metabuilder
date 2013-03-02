@@ -392,12 +392,21 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
      * @param node the node that is being completed
      */
     protected void nodeCompleted(Object parent, Object node) {
-        SchemaNode currentSchema = popSchema();
+        super.nodeCompleted(parent, node);
+
+        // add the node to the parent's collection only after the node is complete
+        SchemaNode currentSchema = getCurrentSchema();
+        SchemaNode parentSchema = (SchemaNode)currentSchema.parent();
+        if(parent != parentSchema && parentSchema instanceof CollectionSchemaNode) {
+            Factory parentFactory = (Factory)parentSchema;
+            parentFactory.setChild(this, parent, node);
+        }
+
+        // check the node for any issues
+        currentSchema = popSchema();
         handleUnsetProperties(currentSchema, node);
         checkCollections(currentSchema, node);
         checkNode(currentSchema, node);
-
-        super.nodeCompleted(parent, node);
     }
 
     protected void checkCollections(SchemaNode currentSchema, Object node) {
@@ -752,8 +761,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             // This section is needed in case a collection member was used outside of a collection
             Factory parentFactory = (Factory)parentSchema;
             parentFactory.setParent(this, parent, child);
-            parentFactory.setChild(this, parent, child);
-            
+            // call in nodeCompleted: parentFactory.setChild(this, parent, child);
         } else if(propertyAttr != null) { // support override of property name
         	
             if(propertyAttr instanceof Closure) {
