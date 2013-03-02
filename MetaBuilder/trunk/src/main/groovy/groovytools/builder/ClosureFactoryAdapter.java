@@ -44,18 +44,13 @@ public class ClosureFactoryAdapter extends AbstractFactory {
         this.closure = closure;
     }
     
-//    @Override
-//    public void setParent(FactoryBuilderSupport builder, Object parent,
-//    		Object child) {
-//    	if (builder instanceof MetaObjectGraphBuilder) {
-//			MetaObjectGraphBuilder mogb = (MetaObjectGraphBuilder) builder;
-//			SchemaNode node = mogb.getCurrentSchema();
-//			String propertyName = (String) node.name();
-//			InvokerHelper.setProperty(parent, propertyName, child);
-//		} else {
-//			super.setParent(builder, parent, child);
-//		}
-//    }
+    @Override
+    public void setParent(FactoryBuilderSupport builder, Object parent, Object child) {
+			MetaObjectGraphBuilder mogb = (MetaObjectGraphBuilder) builder;
+			SchemaNode node = mogb.getCurrentSchema();
+			String propertyName = (String) node.name();
+			InvokerHelper.setProperty(parent, propertyName, child);
+    }
 
     /**
      * Invocations of this method are delegated to the {@link Closure} to return an object when called.
