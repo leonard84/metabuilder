@@ -772,8 +772,12 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         	
         } else {
             FactoryBuilderSupport proxyBuilder = getProxyBuilder();
+
             Factory currentFactory = proxyBuilder.getCurrentFactory();
-            currentFactory.setParent(this, parent, child);
+            if(parent instanceof CollectionSchemaNode == false) {
+                currentFactory.setParent(this, parent, child);
+            }
+
             Factory parentFactory = proxyBuilder.getParentFactory();
             if(child instanceof CollectionSchemaNode == false && parentFactory != null) {
                 parentFactory.setChild(this, parent, child);
