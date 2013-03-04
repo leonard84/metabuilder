@@ -62,10 +62,10 @@ afterEvaluate {
 	getTasksByName('jar', false)*.dependsOn('writePom')
 }
 
-
-def cloudbeesUsername = System.getProperty("CLOUDBEES_JENKINS_USER")
-def cloudbeesPassword = System.getProperty("CLOUDBEES_JENKINS_PASSWORD")
-def cloudbeesAccountName = System.getProperty("CLOUDBEES_JENKINS_ACCOUNT")
+def env = System.getenv()
+def cloudbeesUsername = env['CLOUDBEES_JENKINS_USER']
+def cloudbeesPassword = env['CLOUDBEES_JENKINS_PASSWORD']
+def cloudbeesAccountName = env['CLOUDBEES_JENKINS_ACCOUNT']
 
 uploadArchives {
 	repositories.mavenDeployer {
