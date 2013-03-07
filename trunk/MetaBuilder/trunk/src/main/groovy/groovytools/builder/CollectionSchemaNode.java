@@ -240,17 +240,10 @@ public class CollectionSchemaNode extends SchemaNode implements Factory {
                 }
                 
                 if (property == null) {
-                	Object factoryAttr = attribute("factory");
-                	// Maybe extend this to other forms of factory handling
-                	if (factoryAttr instanceof Closure) {
-                		property = ((Closure)factoryAttr).call();
-                	} else {
-                        if (keyAttr == null) { //if key attribute is defined then we assume it is a list
-                        	property = new ArrayList();
-                        } else { //if key attribute is defined then we assume it is a map
-                        	property = new HashMap();
-                        }                		
-                	}
+                    MetaObjectGraphBuilder mogb = (MetaObjectGraphBuilder)builder;
+                    Map attrs = attributes();
+                    Factory factory = mogb.resolveCollectionFactory(this);
+                    property = factory.newInstance(builder, name(), this, attrs);
                     // also set the new collection to the parent
                     InvokerHelper.setProperty(parentBean, (String)collectionAttr, property);
                 }
