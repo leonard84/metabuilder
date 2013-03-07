@@ -526,7 +526,7 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
         }
         if(factory instanceof Closure) {
             // Is it cool to wrap the closure and replace it?
-            // It does save having to keep wrapping the closure everytime, but is there a downside?
+            // It does save having to keep wrapping the closure every time, but is there a downside?
             ClosureFactoryAdapter closureFactoryAdapter = new ClosureFactoryAdapter((Closure)factory);
             schema.attributes().put("factory", closureFactoryAdapter);
             return closureFactoryAdapter;
@@ -535,6 +535,48 @@ public class MetaObjectGraphBuilder extends ObjectGraphBuilder {
             return super.resolveFactory(name, attributes, value);
         }
         return defaultFactory;
+    }
+
+    public Factory resolveCollectionFactory(SchemaNode collectionSchema) {
+        // Need to have this implementation act first before super,
+        // but FactoryBuilderSupport.resolveFactory() sets the CHILD_BUILDER context
+        // So it must be done directly here.  Not using CHILD_BUILDER for Groovy 1.5 compatibility.
+        getContext().put("_CHILD_BUILDER_"/* CHILD_BUILDER */, this);
+
+        Object factory = findSchemaAttribute(collectionSchema, "factory");
+        if(factory != null && factory instanceof Factory) {
+            return (Factory)factory;
+        }
+
+        Factory result = null;
+        if(factory instanceof Closure) {
+            result = new ClosureFactoryAdapter((Closure)factory);
+        }
+        else if(factory instanceof String || factory instanceof Class) {
+            result = super.resolveFactory(collectionSchema.name(), collectionSchema.attributes(), collectionSchema);
+        }
+        else {
+            if (findSchemaAttribute(collectionSchema, "key") == null) { //if key attribute is not defined then we assume it is a List
+                result = new AbstractFactory() {
+                    @Override
+                    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
+                        return new ArrayList();
+                    }
+                };
+            }
+            else { //if key attribute is defined then we assume it is a map
+                result = new AbstractFactory() {
+                    @Override
+                    public Object newInstance(FactoryBuilderSupport builder, Object name, Object value, Map attributes) throws InstantiationException, IllegalAccessException {
+                        return new LinkedHashMap();
+                    }
+                };
+            }
+        }
+        // Is it cool to wrap the closure and replace it?
+        // It does save having to keep wrapping the closure every time, but is there a downside?
+        collectionSchema.attributes().put("factory", result);
+        return result;
     }
 
     /**

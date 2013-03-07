@@ -500,6 +500,25 @@ public class MetaBuilder {
         if(c != null) return c.getClassLoader();
         return getClass().getClassLoader();
     }
+
+    public ClassLoader getDefaultClassLoaderUsingSecurityManager() {
+        int frame = 1;
+        Class[] stack = new SecurityManager() {
+            public Class[] getStack() {
+                return getClassContext();
+            }
+        }.getStack();
+
+        Class c = getClass();
+        while (frame < stack.length && !(c.getClassLoader() instanceof groovy.lang.GroovyClassLoader.InnerLoader)) {
+            //if(c.getClassLoader() != null) System.out.println(c.getClassLoader().hashCode() + " " + c + " " + c.getClassLoader());
+            c = stack[frame++];
+        }
+        //if(c.getClassLoader() != null) System.out.println(c.getClassLoader().hashCode() + " " + c + " " + c.getClassLoader());
+        if(c != null) return c.getClassLoader();
+        return getClass().getClassLoader();
+    }
+
     public Factory getDefaultBuildNodeFactory() {
         return defaultBuildNodeFactory;
     }
@@ -628,7 +647,7 @@ public class MetaBuilder {
         SchemaNode colSchemaPropertiesDef = new SchemaNode(colSchemaProperties, "def");
         // don't need a check for collection default since it can take any object as a default value
         SchemaNode colSchemaPropertiesFactory = new SchemaNode(colSchemaProperties, "factory");
-        colSchemaPropertiesFactory.attributes().put("check", nullOrClosure);
+        colSchemaPropertiesFactory.attributes().put("check", nullOrStringOrClassOrFactoryOrClosure);
         
 
         SchemaNode colElementSchema = new SchemaNode(colSchema, "%");  // allows the collection's element to have any name, e.g. foo
