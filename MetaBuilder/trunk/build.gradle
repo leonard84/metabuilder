@@ -81,5 +81,9 @@ uploadArchives {
 	}
 }
 
+task release (dependsOn:['build', 'javadoc', 'uploadArchives'], description: 'Combines all tasks for a release') {
+	
+}
+
 //just needed to create or update the gradlew wrapper, irrelevant for the build otherwise
 task wrapper(type: Wrapper) { gradleVersion = '1.4' }
