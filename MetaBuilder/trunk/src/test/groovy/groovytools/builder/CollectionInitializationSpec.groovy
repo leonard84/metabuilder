@@ -3,7 +3,7 @@ package groovytools.builder;
 import groovy.transform.Canonical;
 import spock.lang.Specification;
 
-class CollectionInitialization extends Specification {
+class CollectionInitializationSpec extends Specification {
 	
 	MetaBuilder mb
 	

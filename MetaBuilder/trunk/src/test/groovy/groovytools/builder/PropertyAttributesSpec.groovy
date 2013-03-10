@@ -8,7 +8,7 @@ import groovytools.builder.MetaBuilder
  * @author didge
  * @version $Id: PropertyAttributesTest.groovy 73 2013-02-01 19:55:48Z damokles $
  */
-class PropertyAttributesTest extends Specification {
+class PropertyAttributesSpec extends Specification {
 	
 	MetaBuilder mb = new MetaBuilder()
 
