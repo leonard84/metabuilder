@@ -22,10 +22,15 @@ dependencies {
 
 // MetaInfo
 group = 'groovytools.builder'
-def versionBase = '2.1.0'
+def versionBase = '2.0.1'
 //default artifact name is defined in settings.gradle
 
 defaultTasks('check')
+
+compileJava {
+  sourceCompatibility = 1.6
+  targetCompatibility = 1.6
+}
 
 // handles releases gracefully
 gradle.taskGraph.whenReady {taskGraph ->
