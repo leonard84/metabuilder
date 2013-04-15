@@ -3,8 +3,6 @@ package groovytools.builder
 import groovytools.builder.support.TestChild
 import groovytools.builder.support.TestParent
 
-import java.lang.invoke.MethodHandleImpl.BindCaller.T
-
 import spock.lang.Specification
 
 class CollectionListAddSpec extends Specification {
