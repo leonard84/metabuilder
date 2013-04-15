@@ -22,7 +22,7 @@ dependencies {
 
 // MetaInfo
 group = 'groovytools.builder'
-def versionBase = '2.0.3'
+def versionBase = '2.1.0'
 //default artifact name is defined in settings.gradle
 
 defaultTasks('check')
